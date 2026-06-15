@@ -28,19 +28,19 @@ def generate_launch_description():
     robot_description = {"robot_description": robot_description_content}
 
     # --- Nodes ---
-    joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
-        parameters=[{'device_id': 0}]
-    )
+    # joy_node = Node(
+    #     package='joy',
+    #     executable='joy_node',
+    #     name='joy_node',
+    #     parameters=[{'device_id': 0}]
+    # )
 
-    teleop_node = Node(
-        package='teleop_twist_joy',
-        executable='teleop_node',
-        name='teleop_twist_joy_node',
-        parameters=[PathSubstitution(control_pkg) / "config" / "joystick.yaml"]
-    )
+    # teleop_node = Node(
+    #     package='teleop_twist_joy',
+    #     executable='teleop_node',
+    #     name='teleop_twist_joy_node',
+    #     parameters=[PathSubstitution(control_pkg) / "config" / "joystick.yaml"]
+    # )
 
     control_node = Node(
         package="controller_manager",
@@ -87,21 +87,21 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration("gui")),
     )
 
-    state_manager_node = Node(
-        package='control',
-        executable='state_manager_node',
-        name='state_manager_node',
-        output='screen'
-    )
+    # state_manager_node = Node(
+    #     package='control',
+    #     executable='state_manager_node',
+    #     name='state_manager_node',
+    #     output='screen'
+    # )
 
     return LaunchDescription([
         DeclareLaunchArgument("gui", default_value="false"),
-        joy_node,
-        teleop_node,
+        # joy_node,
+        # teleop_node,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
         delay_tibble_controller_spawner,
-        rviz_node,
-        state_manager_node
+        # rviz_node,
+        # state_manager_node
     ])
