@@ -48,6 +48,9 @@ Someone's projects that have a LOT of custom controllers:
 Another someone
 - https://github.com/mateusmenezes95/omnidirectional_controllers
 
+Commonplace Robotics
+- https://github.com/CommonplaceRobotics/iRC_ROS
+
 ## Maybes
 
 - Care about launch files
