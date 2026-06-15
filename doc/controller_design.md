@@ -19,6 +19,7 @@ robot_controller.cpp
     - called after the controller is set to the inactive state. occurs when controller STARTS for the first time, but also restarted. Unconfigured -> Inactive
     - reconfigurable parameters should be read in this method
     - create pubs/subs/clients/etc. reoccurring relationships that need to be configured anytime it is restarted
+    - create lambda callback functions here
 - command_interface_configuration
     - called after on_configure
     - returns a list of InterfaceConfiguration objects

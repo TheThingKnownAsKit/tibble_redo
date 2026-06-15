@@ -55,7 +55,7 @@ add_library(control SHARED
 
 target_compile_features(control PUBLIC cxx_std_17)
 target_include_directories(control PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/control/include>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/control>
 )
 target_link_libraries(control PUBLIC
