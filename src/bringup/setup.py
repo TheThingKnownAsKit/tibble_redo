@@ -1,6 +1,8 @@
+import os
+from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'launch'
+package_name = 'bringup'
 
 setup(
     name=package_name,
@@ -10,11 +12,13 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join("share", package_name, "config"), glob("config/*")),
+        (os.path.join("share", package_name, "launch_files"), glob("launch_files/*")),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='ellam',
-    maintainer_email='ellam@todo.todo',
+    maintainer_email='moodyellam@gmail.com',
     description='TODO: Package description',
     license='Apache-2.0',
     extras_require={
