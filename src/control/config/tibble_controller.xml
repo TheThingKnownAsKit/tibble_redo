@@ -1,0 +1,8 @@
+<library path="control">
+  <class
+    name="tibble_controller/TibbleController"
+    type="tibble_controller::TibbleController"
+    base_class_type="controller_interface::ControllerInterface">
+    <description>Controls tibble :)</description>
+  </class>
+</library>

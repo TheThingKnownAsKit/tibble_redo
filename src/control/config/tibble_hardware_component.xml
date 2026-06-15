@@ -1,0 +1,8 @@
+<library path="control">
+  <class
+    name="tibble_hardware_component/TibbleHardwareComponent"
+    type="tibble_hardware_component::TibbleHardwareComponent"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>Hardware plugin for tibble</description>
+  </class>
+</library>
