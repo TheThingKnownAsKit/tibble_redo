@@ -9,114 +9,116 @@ using config_type = controller_interface::interface_configuration_type;
 namespace tibble_controller
 {
 
-controller_interface::CallbackReturn TibbleController::on_init()
-{
-  try
-  {
-    joint_names_ = auto_declare<std::vector<std::string>>("joints", joint_names_);
-    command_interface_types_ =
-        auto_declare<std::vector<std::string>>("command_interfaces", command_interface_types_);
-    state_interface_types_ =
-        auto_declare<std::vector<std::string>>("state_interfaces", state_interface_types_);
-  }
-  catch(const std::exception& e)
-  {
-    RCLCPP_ERROR(get_node()->get_logger(), "on_init exception: %s", e.what());
-    return controller_interface::CallbackReturn::ERROR;
-  }
-
-  RCLCPP_INFO(get_node()->get_logger(), "Initialized TibbleController.");
-  return CallbackReturn::SUCCESS;
-}
-
-controller_interface::InterfaceConfiguration TibbleController::command_interface_configuration() const
-{
-  controller_interface::InterfaceConfiguration config = {config_type::INDIVIDUAL, {}};
-
-  config.names.reserve(joint_names_.size() * command_interface_types_.size());
-  for (const auto & joint_name : joint_names_)
-  {
-    for (const auto & interface_type : command_interface_types_)
+    controller_interface::CallbackReturn TibbleController::on_init()
     {
-      config.names.push_back(joint_name + "/" + interface_type);
+        try
+        {
+            joint_names_ = auto_declare<std::vector<std::string>>("joints", joint_names_);
+            command_interface_types_ =
+                auto_declare<std::vector<std::string>>("command_interfaces", command_interface_types_);
+            state_interface_types_ =
+                auto_declare<std::vector<std::string>>("state_interfaces", state_interface_types_);
+        }
+        catch (const std::exception &e)
+        {
+            RCLCPP_ERROR(get_node()->get_logger(), "on_init exception: %s", e.what());
+            return controller_interface::CallbackReturn::ERROR;
+        }
+
+        RCLCPP_INFO(get_node()->get_logger(), "Initialized TibbleController.");
+        return CallbackReturn::SUCCESS;
     }
-  }
 
-  return config;
-}
-
-controller_interface::InterfaceConfiguration TibbleController::state_interface_configuration() const
-{
-  controller_interface::InterfaceConfiguration config = {config_type::INDIVIDUAL, {}};
-
-  config.names.reserve(joint_names_.size() * state_interface_types_.size());
-  for (const auto & joint_name : joint_names_)
-  {
-    for (const auto & interface_type : state_interface_types_)
+    controller_interface::InterfaceConfiguration TibbleController::command_interface_configuration() const
     {
-      config.names.push_back(joint_name + "/" + interface_type);
-    }
-  }
+        controller_interface::InterfaceConfiguration config = {config_type::INDIVIDUAL, {}};
 
-  return config;
-}
+        config.names.reserve(joint_names_.size() * command_interface_types_.size());
+        for (const auto &joint_name : joint_names_)
+        {
+            for (const auto &interface_type : command_interface_types_)
+            {
+                config.names.push_back(joint_name + "/" + interface_type);
+            }
+        }
 
-controller_interface::CallbackReturn TibbleController::on_configure(const rclcpp_lifecycle::State &)
-{
-    // TODO: Get params from the yaml
-
-    cmd_vel_sub_ = get_node()->create_subscription<geometry_msgs::msg::Twist>(
-        "/cmd_vel", rclcpp::SystemDefaultsQoS(),
-        [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
-            twist_cmd_buffer_.writeFromNonRT(*msg);
-        });
-    
-    // TODO: odom pub, tf broadcaster, state service
-
-    RCLCPP_INFO(get_node()->get_logger(), "Configured TibbleController.");
-    return CallbackReturn::SUCCESS;
-}
-
-controller_interface::CallbackReturn TibbleController::on_activate(const rclcpp_lifecycle::State &)
-{
-  // clear out vectors in case of restart
-  joint_position_command_interface_.clear();
-  joint_velocity_command_interface_.clear();
-  joint_position_state_interface_.clear();
-  joint_velocity_state_interface_.clear();
-
-  // assign command interfaces
-  for (auto & interface : command_interfaces_)
-  {
-    command_interface_map_[interface.get_interface_name()]->push_back(interface);
-  }
-
-  // assign state interfaces
-  for (auto & interface : state_interfaces_)
-  {
-    state_interface_map_[interface.get_interface_name()]->push_back(interface);
-  }
-
-  if (command_interfaces_.empty() || state_interfaces_.empty()) {
-        RCLCPP_ERROR(get_node()->get_logger(), "Missing controller interfaces.");
-        return controller_interface::CallbackReturn::ERROR;
+        return config;
     }
 
-  RCLCPP_INFO(get_node()->get_logger(), "Activated TibbleController.");
-  return CallbackReturn::SUCCESS;
-}
+    controller_interface::InterfaceConfiguration TibbleController::state_interface_configuration() const
+    {
+        controller_interface::InterfaceConfiguration config = {config_type::INDIVIDUAL, {}};
 
-controller_interface::return_type TibbleController::update(const rclcpp::Time & time, const rclcpp::Duration & period)
-{
-    // TODO: all of it
-    return controller_interface::return_type::OK;
-}
+        config.names.reserve(joint_names_.size() * state_interface_types_.size());
+        for (const auto &joint_name : joint_names_)
+        {
+            for (const auto &interface_type : state_interface_types_)
+            {
+                config.names.push_back(joint_name + "/" + interface_type);
+            }
+        }
 
-controller_interface::CallbackReturn TibbleController::on_deactivate(const rclcpp_lifecycle::State &)
-{
-    RCLCPP_INFO(get_node()->get_logger(), "Deactivated TibbleController.");
-    return CallbackReturn::SUCCESS;
-}
+        return config;
+    }
+
+    controller_interface::CallbackReturn TibbleController::on_configure(const rclcpp_lifecycle::State &)
+    {
+        // TODO: Get params from the yaml
+
+        cmd_vel_sub_ = get_node()->create_subscription<geometry_msgs::msg::Twist>(
+            "/cmd_vel", rclcpp::SystemDefaultsQoS(),
+            [this](const geometry_msgs::msg::Twist::SharedPtr msg)
+            {
+                twist_cmd_buffer_.writeFromNonRT(*msg);
+            });
+
+        // TODO: odom pub, tf broadcaster, state service
+
+        RCLCPP_INFO(get_node()->get_logger(), "Configured TibbleController.");
+        return CallbackReturn::SUCCESS;
+    }
+
+    controller_interface::CallbackReturn TibbleController::on_activate(const rclcpp_lifecycle::State &)
+    {
+        // clear out vectors in case of restart
+        joint_position_command_interface_.clear();
+        joint_velocity_command_interface_.clear();
+        joint_position_state_interface_.clear();
+        joint_velocity_state_interface_.clear();
+
+        // assign command interfaces
+        for (auto &interface : command_interfaces_)
+        {
+            command_interface_map_[interface.get_interface_name()]->push_back(interface);
+        }
+
+        // assign state interfaces
+        for (auto &interface : state_interfaces_)
+        {
+            state_interface_map_[interface.get_interface_name()]->push_back(interface);
+        }
+
+        if (command_interfaces_.empty() || state_interfaces_.empty())
+        {
+            RCLCPP_ERROR(get_node()->get_logger(), "Missing controller interfaces.");
+            return controller_interface::CallbackReturn::ERROR;
+        }
+
+        RCLCPP_INFO(get_node()->get_logger(), "Activated TibbleController.");
+        return CallbackReturn::SUCCESS;
+    }
+
+    controller_interface::return_type TibbleController::update(const rclcpp::Time &time, const rclcpp::Duration &period)
+    {
+        // TODO: all of it
+        return controller_interface::return_type::OK;
+    }
+
+    controller_interface::CallbackReturn TibbleController::on_deactivate(const rclcpp_lifecycle::State &)
+    {
+        RCLCPP_INFO(get_node()->get_logger(), "Deactivated TibbleController.");
+        return CallbackReturn::SUCCESS;
+    }
 
 } // namespace tibble_controller
 

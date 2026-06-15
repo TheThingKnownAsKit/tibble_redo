@@ -21,8 +21,8 @@
 
 namespace tibble_controller
 {
-class TibbleController : public controller_interface::ControllerInterface
-{
+    class TibbleController : public controller_interface::ControllerInterface
+    {
     public:
         TibbleController() = default;
 
@@ -31,18 +31,18 @@ class TibbleController : public controller_interface::ControllerInterface
         controller_interface::InterfaceConfiguration state_interface_configuration() const override;
 
         controller_interface::return_type update(
-            const rclcpp::Time & time, const rclcpp::Duration & period) override;
+            const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
         controller_interface::CallbackReturn on_init() override;
 
         controller_interface::CallbackReturn on_configure(
-            const rclcpp_lifecycle::State & previous_state) override;
+            const rclcpp_lifecycle::State &previous_state) override;
 
         controller_interface::CallbackReturn on_activate(
-            const rclcpp_lifecycle::State & previous_state) override;
+            const rclcpp_lifecycle::State &previous_state) override;
 
         controller_interface::CallbackReturn on_deactivate(
-            const rclcpp_lifecycle::State & previous_state) override;
+            const rclcpp_lifecycle::State &previous_state) override;
 
     private:
         // Interface setup
@@ -62,19 +62,19 @@ class TibbleController : public controller_interface::ControllerInterface
         std::unordered_map<
             std::string, std::vector<std::reference_wrapper<hardware_interface::LoanedCommandInterface>> *>
             command_interface_map_ = {
-            {"position", &joint_position_command_interface_},
-            {"velocity", &joint_velocity_command_interface_}};
+                {"position", &joint_position_command_interface_},
+                {"velocity", &joint_velocity_command_interface_}};
 
         std::unordered_map<
             std::string, std::vector<std::reference_wrapper<hardware_interface::LoanedStateInterface>> *>
             state_interface_map_ = {
-            {"position", &joint_position_state_interface_},
-            {"velocity", &joint_velocity_state_interface_}};
+                {"position", &joint_position_state_interface_},
+                {"velocity", &joint_velocity_state_interface_}};
 
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
 
         realtime_tools::RealtimeBuffer<geometry_msgs::msg::Twist> twist_cmd_buffer_;
-};
+    };
 } // namespace tibble_controller
 
 #endif // TIBBLE_CONTROLLER_HPP

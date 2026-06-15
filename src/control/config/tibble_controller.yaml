@@ -19,9 +19,9 @@ tibble_controller:
       - DR_Rotate
       - LA_Extend
       - Excavation_Rotate
-    command_interfaces:
+    command_interfaces: # Every joint needs to have these command interfaces
       - position
       - velocity
-    state_interfaces:
+    state_interfaces:   # Every joint needs to have these state interfaces
       - position
       - velocity
