@@ -1,3 +1,14 @@
+# REQUIREMENTS:
+# 1. Share the same network as the host
+# 2. GPU access
+# 3. Display access
+# 4. Zenoh and no zenoh support
+# 5. Bind the repo 
+# 6. Support hotplugging USB input
+# 7. Read/write ability with serial microcontrollers
+# 8. Real time scheduling enabled
+
+
 name: tibble_redo
 services:
   tibble_redo:
