@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Load the real robot ROS2 Control information -->
+    <xacro:unless value="$(arg use_sim)">
+        <ros2_control name="Tibble" type="system">
+
+            <hardware>  <!-- This defines all the params needed for the hardware component -->
+                <xacro:if value="$(arg use_mock_hardware)">
+                    <plugin>mock_components/GenericSystem</plugin>
+                </xacro:if>
+
+                <xacro:unless value="$(arg use_mock_hardware)">
+                    <plugin>tibble_hwc/TibbleHWC</plugin>
+                    <param name="serial_port">/dev/ttyACM0</param>
+                    <param name="baud_rate">115200</param>
+                    <param name="can_interface">can0</param>
+                </xacro:unless>
+            </hardware>
+
+            <!-- Define all the joints that will have a command or state interface -->
+            <joint name="DL_Rotate">
+                <command_interface name="velocity">
+                    <param name="min">-10</param>
+                    <param name="max">10</param>
+                </command_interface>
+                <state_interface name="position"/>
+                <state_interface name="velocity"/>
+            </joint>
+
+            <joint name="DR_Rotate">
+                <command_interface name="velocity">
+                    <param name="min">-10</param>
+                    <param name="max">10</param>
+                </command_interface>
+                <state_interface name="position"/>
+                <state_interface name="velocity"/>
+            </joint>
+
+            <joint name="LA_Extend">
+                <command_interface name="position"/>
+                <command_interface name="la_reset"/>
+                <state_interface name="position"/>
+            </joint>
+
+            <joint name="Excavation_Rotate">
+                <command_interface name="velocity">
+                    <param name="min">-10</param>
+                    <param name="max">10</param>
+                </command_interface>
+            </joint>
+
+            <gpio name="vibe_control">
+                <command_interface name="vibe_enabled"/>
+            </gpio>
+
+            <gpio name="latch_control">
+                <command_interface name="hop_latched"/>
+            </gpio>
+
+        </ros2_control>
+    </xacro:unless>
+
+
+
+    <!-- Load the ROS2 Control information for just sim purposes -->
+    <xacro:if value="$(arg use_sim)">
+        <ros2_control name="name" type="system">
+
+            <hardware>
+                <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+            </hardware>
+
+            <!-- Define all joints and their command/state interfaces necessary for sim -->
+
+        </ros2_control>
+
+        <gazebo>
+            <plugin name="gz_ros2_control::GazeboSimROS2ControlPlugin" filename="libgz_ros2_control-system.so">
+                <parameters>$(find control)/config/tibble_controller.yaml</parameters>
+            </plugin>
+        </gazebo>
+    </xacro:if>
+
+</robot>
+
