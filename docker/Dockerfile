@@ -1,8 +1,11 @@
 ARG ROS_DISTRO=jazzy
 ARG UBUNTU_VER=24.04
 
-####################  RUNTIME STAGE ####################
+####################  BUILD IMAGE ####################
 FROM ros:${ROS_DISTRO}-ros-base
+
+
+####################  RUNTIME STAGE ####################
 
 ARG USERNAME=ubuntu
 ARG USER_UID=1000
@@ -13,7 +16,6 @@ ENV PYTHONPATH="${PYTHONPATH}:/usr/local/lib"
 ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ----- install dependencies -----
 # Install runtime dependencies for librealsense and general tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libusb-1.0-0 udev apt-transport-https ca-certificates curl
@@ -30,9 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libglu1-mesa-dev \
         libxv1 \
         libxtst6
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends usbutils joystick evtest
 
 # Install core python tools
 RUN apt-get update && apt install -y build-essential \ 
@@ -56,18 +55,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
     libserial-dev \
-    # ROS–Gazebo integration
-    ros-${ROS_DISTRO}-ros-gz \
-    ros-${ROS_DISTRO}-gz-ros2-control \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-joint-state-publisher-gui \
     ros-${ROS_DISTRO}-robot-state-publisher \
     # Network package
     ros-${ROS_DISTRO}-rmw-zenoh-cpp \
     # Visualization
-    ros-${ROS_DISTRO}-foxglove-bridge \ 
-    ros-${ROS_DISTRO}-realsense2-camera \
-    ros-${ROS_DISTRO}-realsense2-description
+    ros-${ROS_DISTRO}-foxglove-bridge
 
 RUN curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg" && \
     curl -s --compressed -o /etc/apt/sources.list.d/ctr2026.list "https://deb.ctr-electronics.com/ctr2026.list" && \
