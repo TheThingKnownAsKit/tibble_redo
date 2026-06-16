@@ -37,7 +37,15 @@ NOT IGNORING: ros2 control and related files, including all of the interfaces/ p
     - Kind of not fine. Need to look into more about CTR's API and how this should be written
     - Mock can feature that just prints output to console would also be useful here
 
+Broadcasters are used for sensor data from hardware. Might need to write a custom one for a LiDAR? Depends on how the LiDAR as odometry library works
+
 Will need a launch file too but who cares
+
+## Interesting docs
+
+https://design.ros2.org/articles/node_lifecycle.html
+
+MoveIt is an intersting arm manipulator that might be useful for the senior design project but is probably wildly unnecessary for lunabotics. https://moveit.picknik.ai/main/index.html 
 
 ## Interesting things
 
@@ -47,6 +55,7 @@ Someone's projects that have a LOT of custom controllers:
 
 Another someone
 - https://github.com/mateusmenezes95/omnidirectional_controllers
+    - this is particularly useful since it is a mobile platform robot that publishes odom and tf
 
 Commonplace Robotics
 - https://github.com/CommonplaceRobotics/iRC_ROS
