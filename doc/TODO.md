@@ -15,12 +15,18 @@
 10. redesign the hardware interface file
     - overall is just a little sloppy
     - should utilize the new improvements made in points 8 and 9
+11. add better baremetal support
+    - rosdep info and dependency install script maybe
 
 
-
-STRETCH GOALS
+STRETCH GOALS (not in order of importance)
 1. foxglove implementation
 2. mujoco implementation
 3. launch file redesign?
 4. theoretical sensor implementation with broadcasters
     - otherwise assume only encoders
+5. zenoh implementation
+6. nav2 implementation
+7. docker rewrite
+8. look into ignition by inductive automation (the telemetry service NOT gazebo)
+9. reduce bandwidth?
