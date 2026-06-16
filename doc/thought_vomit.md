@@ -7,7 +7,7 @@ NOT IGNORING: ros2 control and related files, including all of the interfaces/ p
 
 - tibble_controller.yaml
     - MORE things should be in here. It's the easiest thing to edit. Look into if it matters where private variables are declared
-    - Hardware component variables are declared in the URDF rn. Do they HAVE to be? It'd be better to be in the yaml
+    - Hardware interface variables are declared in the URDF rn. Do they HAVE to be? It'd be better to be in the yaml
     - Can we put the controller button schema in here too?
     - The dream is to have no config variables in any cpp/hpp file
 - control/CMakeLists.txt and control/package.xml
@@ -20,7 +20,7 @@ NOT IGNORING: ros2 control and related files, including all of the interfaces/ p
     - Should more things be a service?
 - tibble_controller.cpp
     - This is a mess of made in a rush AI slope, rewrite the whole thing
-- tibble_hardware_component.cpp
+- tibble_hardware_interface.cpp
     - This is fine for the most part. Clean up a bit and template-ify
     - More clear divison of responsibilities between the controller, this, and the _comms files
         - The controller decides what to do (including limit checks)
@@ -29,7 +29,7 @@ NOT IGNORING: ros2 control and related files, including all of the interfaces/ p
             - Limit checks in other files besides the controller is permitted if the limit is INCREDIBLY hardware specific or other misc. scenarios
 - tibble_controller.hpp
     - See what was said about yaml and the source file
-- tibble_hardware_component.cpp
+- tibble_hardware_interface.cpp
 - microcontroller_comms.hpp
     - Relatively fine. Need to look into the specific implementation of variable passing
     - Implement a mock microcontroller comms feature that just prints outputs to console? would be nice for testing

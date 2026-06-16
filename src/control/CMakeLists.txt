@@ -10,7 +10,7 @@ export_windows_symbols()
 ##### DEPENDENCY MANAGEMENT #####
 
 # Create lists of dependencies to install
-set(HW_COMP_INCLUDE_DEPENDS # Hardware component specific dependencies
+set(HW_COMP_INCLUDE_DEPENDS # Hardware interface specific dependencies
   pluginlib
   hardware_interface
 )
@@ -50,7 +50,7 @@ endforeach()
 
 add_library(control SHARED
   src/tibble_controller.cpp
-  src/tibble_hardware_component.cpp
+  src/tibble_hardware_interface.cpp
 )
 
 target_compile_features(control PUBLIC cxx_std_17)
@@ -65,7 +65,7 @@ target_link_libraries(control PUBLIC
   realtime_tools::realtime_tools
 )
 
-pluginlib_export_plugin_description_file(hardware_interface config/tibble_hardware_component.xml)
+pluginlib_export_plugin_description_file(hardware_interface config/tibble_hardware_interface.xml)
 pluginlib_export_plugin_description_file(controller_interface config/tibble_controller.xml)
 
 install(
