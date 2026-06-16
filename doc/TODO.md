@@ -8,14 +8,17 @@
 6. with all the above in mind, design the control flow for the update() function
 7. implement the update() function
 8. redesign the can_comms.hpp file. look to see if theres existing code
+    - is there a way to filter out or otherwise stop the stale can stuff causing a headache? not that i can test it
 9. redesign the microcontroller_comms.hpp file. Look at similar resources (including AR) for reference. Decide on comms schema
     - it might be possible to make this require less manual editing. like having more dynamic amounts of motors
     - is there a more secure way to pass information by serial than string parsing that is also worth the extra effort?
     - overall id like for this file to be way more flexible and plug and play
-10. redesign the hardware interface file
+10. redesign the microcontroller firmware itself to be more flexible and plug and play
+    - better platformio explanations maybe?
+11. redesign the hardware interface file
     - overall is just a little sloppy
     - should utilize the new improvements made in points 8 and 9
-11. add better baremetal support
+12. add better baremetal support
     - rosdep info and dependency install script maybe
 
 
@@ -28,5 +31,8 @@ STRETCH GOALS (not in order of importance)
 5. zenoh implementation
 6. nav2 implementation
 7. docker rewrite
+    - support for windows with wsl? cant do usb pass through but can do general development with keyboard as controller maybe
 8. look into ignition by inductive automation (the telemetry service NOT gazebo)
 9. reduce bandwidth?
+10. actual in repo documentation like repo README.md and package level README's 
+11. script that parses OnShape generated URDF and turns it into the xacro format we like????? thatd be cool
