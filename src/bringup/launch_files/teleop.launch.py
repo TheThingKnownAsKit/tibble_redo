@@ -1,3 +1,5 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
 from launch.conditions import IfCondition
@@ -27,20 +29,31 @@ def generate_launch_description():
     )
     robot_description = {"robot_description": robot_description_content}
 
-    # --- Nodes ---
-    # joy_node = Node(
-    #     package='joy',
-    #     executable='joy_node',
-    #     name='joy_node',
-    #     parameters=[{'device_id': 0}]
-    # )
+    joy_params = os.path.join(control_pkg, 'config', 'joystick.yaml')
+    twist_mux_params = os.path.join(control_pkg, 'config', 'twist_mux.yaml')
 
-    # teleop_node = Node(
-    #     package='teleop_twist_joy',
-    #     executable='teleop_node',
-    #     name='teleop_twist_joy_node',
-    #     parameters=[PathSubstitution(control_pkg) / "config" / "joystick.yaml"]
-    # )
+    # --- Nodes ---
+    joy_node = Node(
+        package='joy',
+        executable='joy_node',
+        name='joy_node',
+        parameters=[joy_params]
+    )
+
+    teleop_node = Node(
+        package='teleop_twist_joy',
+        executable='teleop_node',
+        name='teleop_twist_joy_node',
+        parameters=[joy_params],
+        remappings={('/cmd_vel', '/cmd_vel_joy')},
+    )
+
+    twist_mux_node = Node(
+            package="twist_mux",
+            executable="twist_mux",
+            parameters=[twist_mux_params],
+            remappings=[('/cmd_vel_out','/diff_cont/cmd_vel')]
+        )
 
     control_node = Node(
         package="controller_manager",
@@ -98,6 +111,7 @@ def generate_launch_description():
         DeclareLaunchArgument("gui", default_value="false"),
         # joy_node,
         # teleop_node,
+        # twist_mux_node,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
