@@ -31,7 +31,7 @@ namespace tibble_controller
             paddle_speed_ = auto_declare<double>("paddle_speed", paddle_speed_);
             la_speed_ = auto_declare<double>("linear_actuator_speed", la_speed_);
             excav_dt_speed_multiplier_ = auto_declare<double>("excav_dt_speed_multiplier", excav_dt_speed_multiplier_);
-            telemetry_update_rate_ = auto_declare<double>("telemetry_update_rate", telemetry_update_rate_);
+            telemetry_update_rate_ = auto_declare<long int>("telemetry_update_rate", telemetry_update_rate_);
         }
         catch (const std::exception &e)
         {

@@ -80,7 +80,7 @@ namespace tibble_controller
         double paddle_speed_;               // radians/second
         double la_speed_;                   // meters/second
         double excav_dt_speed_multiplier_;
-        int telemetry_update_rate_;         // milliseconds
+        long int telemetry_update_rate_;         // milliseconds
 
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
 
