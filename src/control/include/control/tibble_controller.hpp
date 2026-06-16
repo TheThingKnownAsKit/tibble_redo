@@ -70,6 +70,17 @@ namespace tibble_controller
             state_interface_map_ = {
                 {"position", &joint_position_state_interface_},
                 {"velocity", &joint_velocity_state_interface_}};
+        
+        // YAML parameters (that aren't interface related)
+        std::string cmd_topic_;
+        std::string odom_topic_;
+        std::string tf_topic_;
+        double wheel_radius_;               // meters
+        double wheel_separation_;           // meters
+        double paddle_speed_;               // radians/second
+        double la_speed_;                   // meters/second
+        double excav_dt_speed_multiplier_;
+        int telemetry_update_rate_;         // milliseconds
 
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
 

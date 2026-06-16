@@ -13,11 +13,25 @@ namespace tibble_controller
     {
         try
         {
+            // Declare node parameters. These are lists from the tibble_controller.yaml file into variables declared in header
+
+            // Interface declaration
             joint_names_ = auto_declare<std::vector<std::string>>("joints", joint_names_);
             command_interface_types_ =
                 auto_declare<std::vector<std::string>>("command_interfaces", command_interface_types_);
             state_interface_types_ =
                 auto_declare<std::vector<std::string>>("state_interfaces", state_interface_types_);
+            
+            // Configuration declaration
+            cmd_topic_ = auto_declare<std::string>("command_topic", cmd_topic_);
+            odom_topic_ = auto_declare<std::string>("odometry_topic", odom_topic_);
+            tf_topic_ = auto_declare<std::string>("transform_topic", tf_topic_);
+            wheel_radius_ = auto_declare<double>("wheel_radius", wheel_radius_);
+            wheel_separation_ = auto_declare<double>("wheel_separation", wheel_separation_);
+            paddle_speed_ = auto_declare<double>("paddle_speed", paddle_speed_);
+            la_speed_ = auto_declare<double>("linear_actuator_speed", la_speed_);
+            excav_dt_speed_multiplier_ = auto_declare<double>("excav_dt_speed_multiplier", excav_dt_speed_multiplier_);
+            telemetry_update_rate_ = auto_declare<double>("telemetry_update_rate", telemetry_update_rate_);
         }
         catch (const std::exception &e)
         {
@@ -63,8 +77,6 @@ namespace tibble_controller
 
     controller_interface::CallbackReturn TibbleController::on_configure(const rclcpp_lifecycle::State &)
     {
-        // TODO: Get params from the yaml
-
         cmd_vel_sub_ = get_node()->create_subscription<geometry_msgs::msg::Twist>(
             "/cmd_vel", rclcpp::SystemDefaultsQoS(),
             [this](const geometry_msgs::msg::Twist::SharedPtr msg)

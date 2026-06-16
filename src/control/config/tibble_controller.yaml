@@ -10,10 +10,20 @@ controller_manager:
 
 tibble_controller:
   ros__parameters:
-    wheel_radius: 0.929
-    wheel_separation: 0.5659
+    command_topic: "~/cmd_vel"
+    odometry_topic: "~/odom"
+    transform_topic: "/tf"
 
-    # Not really sure how but these auto populate in the controller code
+    wheel_radius: 0.929             # meters
+    wheel_separation: 0.5659        # meters
+
+    paddle_speed: 12.25             # radians/second
+    linear_actuator_speed: 0.01     # meters/second (in extension)
+    excav_dt_speed_multiplier: 0.5  # multiply drivetrain speed by when excavating
+
+    telemetry_update_rate: 3000     # milliseconds between printing
+
+    # This populates as a list named "joints" when using auto_declare
     joints:
       - DL_Rotate
       - DR_Rotate
