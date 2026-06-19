@@ -1,0 +1,25 @@
+command_center_node:
+  ros__parameters:
+    # Universal buttons
+    enable_b: START
+    panic_b: BACK     # Sometimes listed as SELECT on controllers
+
+    # These buttons swap what mode the command center is in
+    modes:
+      state_machine_b: DPAD_UP
+      manual_b: DPAD_DOWN
+      autonomy_b: DPAD_RIGHT
+
+      # Mode specific button mappings (can overlap)
+      state_machine:
+        idle_b: A
+        travel_b: B
+        excavate: X
+        deposit: Y
+      manual:
+        la_extend_b: A
+        la_retract_b: Y
+        latch_toggle_b: X
+        vibe_toggle_b: B
+        excav_axis: TRIGGERRIGHT
+    
