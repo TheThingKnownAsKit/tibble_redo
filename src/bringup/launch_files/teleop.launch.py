@@ -29,14 +29,14 @@ def generate_launch_description():
     )
     robot_description = {"robot_description": robot_description_content}
 
-    joy_params = os.path.join(control_pkg, 'config', 'joystick.yaml')
-    twist_mux_params = os.path.join(control_pkg, 'config', 'twist_mux.yaml')
+    joy_params = PathSubstitution(control_pkg) / "config" / "joystick.yaml"
+    twist_mux_params = PathSubstitution(control_pkg) / "config" / "twist_mux.yaml"
 
     # --- Nodes ---
     joy_node = Node(
         package='joy',
         executable='joy_node',
-        name='joy_node',
+        name='game_controller_node',
         parameters=[joy_params]
     )
 

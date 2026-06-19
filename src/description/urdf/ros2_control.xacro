@@ -7,7 +7,7 @@
 
             <hardware>  <!-- This defines all the params needed for the hardware interface -->
                 <xacro:if value="$(arg use_mock_hardware)">
-                    <plugin>mock_interfaces/GenericSystem</plugin>
+                    <plugin>mock_components/GenericSystem</plugin>
                 </xacro:if>
 
                 <xacro:unless value="$(arg use_mock_hardware)">
