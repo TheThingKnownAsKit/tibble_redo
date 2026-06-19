@@ -65,8 +65,8 @@ target_link_libraries(control PUBLIC
   realtime_tools::realtime_tools
 )
 
-pluginlib_export_plugin_description_file(hardware_interface config/tibble_hardware_interface.xml)
-pluginlib_export_plugin_description_file(controller_interface config/tibble_controller.xml)
+pluginlib_export_plugin_description_file(hardware_interface tibble_hardware_interface.xml)
+pluginlib_export_plugin_description_file(controller_interface tibble_controller.xml)
 
 install(
   DIRECTORY include/
