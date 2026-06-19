@@ -60,6 +60,23 @@ Another someone
 Commonplace Robotics
 - https://github.com/CommonplaceRobotics/iRC_ROS
 
+Implements slam_toolbox:
+https://github.com/giulioturrisi/Differential-Drive-Robot
+
+https://github.com/hijimasa/omni_wheel_controller
+
+https://github.com/maxipalay/minimec-ros2
+
+MoveIt and gazebo support:
+https://github.com/blackcoffeerobotics/bcr_arm
+https://github.com/ZeroErrControl/eRob_ROS2_MoveIt
+
+State machine implemented with sim and cusotm RViz2 plugin
+https://github.com/ros-industrial/packml_ros2
+
+Org dedicated to compiling ROS2 add ons that make it more suited for industry
+https://github.com/ros-industrial
+
 ## Maybes
 
 - Care about launch files
