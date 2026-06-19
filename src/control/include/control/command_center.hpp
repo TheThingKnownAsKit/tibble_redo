@@ -9,7 +9,6 @@
 #include <atomic>
 
 #include "lifecycle_msgs/msg/transition.hpp"
-
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/publisher.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -17,6 +16,7 @@
 #include "realtime_tools/realtime_buffer.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+
 #include "interfaces/srv/change_state.hpp"
 #include "interfaces/msg/commands.hpp"
 
@@ -64,7 +64,9 @@ namespace command_center
         std::string manual_excav_axis_;
 
         // Internal variables
-        std::atomic<uint8_t> current_state_;
+        std::atomic<State> current_state_;
+        std::shared_ptr<rclcpp::TimerBase> timer_;
+        auto msg_ = interfaces::msg::Commands();
 
         // Subs
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
@@ -77,9 +79,22 @@ namespace command_center
 
         // Service server
         rclcpp::Service<interfaces::srv::ChangeState>::SharedPtr change_state_service_;
+
+        // State enum
+        enum class State
+        {
+            STATE_MACHINE,
+            MANUAL,
+            AUTONOMY,
+            STATE_NR_ITEMS, // NOT A REAL STATE, this is just for bounds checking
+        };
+
+        // Functions
         void change_state_callback(
             const std::shared_ptr<interfaces::srv::ChangeState::Request> request,
             std::shared_ptr<interfaces::srv::ChangeState::Response> response);
+
+        void control_loop();
     }
 } // namespace command_center
 
