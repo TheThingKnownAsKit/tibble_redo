@@ -9,9 +9,18 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
+# Add new messages or services here
+set(msg_files
   "msg/Commands.msg"
+)
+set(srv_files
   "srv/ChangeState.srv"
+)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  ${srv_files}
+  # Dependencies for any messages or services would go here if there were any
 )
 
 ament_package()
