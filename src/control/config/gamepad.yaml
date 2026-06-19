@@ -14,8 +14,8 @@ command_center_node:
       state_machine:
         idle_b: A
         travel_b: B
-        excavate: X
-        deposit: Y
+        excavate_b: X
+        deposit_b: Y
       manual:
         la_extend_b: A
         la_retract_b: Y
