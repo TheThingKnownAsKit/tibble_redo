@@ -5,8 +5,8 @@ namespace command_center
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_configure(const rclcpp_lifecycle::State &)
     {
-        enable_b_ = get_node()->get_parameter("enable_b").as_string();
-        panic_b_ = get_node()->get_parameter("panic_b").as_string();
+        modes_enable_b_ = get_node()->get_parameter("enable_b").as_string();
+        modes_panic_b_ = get_node()->get_parameter("panic_b").as_string();
         modes_state_machine_b_ = get_node()->get_parameter("state_machine_b").as_string();
         modes_manual_b_ = get_node()->get_parameter("manual_b").as_string();
         modes_autonomy_b_ = get_node()->get_parameter("autonomy_b").as_string();
@@ -20,7 +20,8 @@ namespace command_center
         manual_vibe_toggle_b_ = get_node()->get_parameter("vibe_toggle_b").as_string();
         manual_excav_axis_ = get_node()->get_parameter("excav_axis").as_string();
 
-        command_pub_ = this->create_publisher<interfaces::msg::Commands>("/commands", rclcpp::SystemDefaultsQoS());
+        manual_command_pub_ = this->create_publisher<interfaces::msg::ManualCommands>("/manual_commands", rclcpp::SystemDefaultsQoS());
+        sm_command_pub_ = this->create_publisher<interfaces::msg::StateMachineCommands>("/state_machine_commands", rclcpp::SystemDefaultsQoS());
 
         change_state_service_ = get_node()->create_service<interfaces::srv::ChangeState>(
             "/change_state",
@@ -28,10 +29,11 @@ namespace command_center
 
         joy_sub_ = get_node()->create_subscription<sensor_msgs::msg::Joy>(
             "/joy", rclcpp::SensorDataQoS(),
-            [this](const sensor_msgs::msg::Joy::SharedPtr msg) {
+            [this](const sensor_msgs::msg::Joy::SharedPtr msg)
+            {
                 joy_cmd_buffer_.writeFromNonRT(*msg);
             });
-        
+
         // Psuedo realtime control/update function. Updates at 50Hz
         timer_ = this->create_wall_timer(50ms, std::bind(&CommandCenter::control_loop, this));
 
@@ -45,12 +47,14 @@ namespace command_center
         current_state = STATE_IDLE;
 
         // Set everything to safe defaults
-        msg_.toggle_latch = true;  // closed
-        msg_.toggle_vibe = false;   // off
-        msg_.excavate_cmd = 0.0;
-        msg_.la_cmd = 0.0;
+        manual_msg_.toggle_latch = true; // closed
+        manual_msg_.toggle_vibe = false; // off
+        manual_msg_.excavate_cmd = 0.0;
+        manual_msg_.la_cmd = 0.0;
+        sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
 
-        command_pub_->on_activate();
+        manual_command_pub_->on_activate();
+        sm_command_pub_->on_activate();
         LifecycleNode::on_activate(state);
 
         RCLCPP_INFO(get_node()->get_logger(), "Activated CommandCenter.");
@@ -62,7 +66,8 @@ namespace command_center
     {
         current_state = STATE_IDLE;
 
-        command_pub_->on_deactivate();
+        manual_command_pub_->on_deactivate();
+        sm_command_pub_->on_deactivate();
         LifecycleNode::on_deactivate(state);
 
         RCLCPP_INFO(get_node()->get_logger(), "Deactivated CommandCenter.");
@@ -72,15 +77,17 @@ namespace command_center
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_cleanup(const rclcpp_lifecycle::State &)
     {
-        command_pub_.reset();
+        manual_command_pub_.reset();
+        sm_command_pub_.reset();
         joy_cmd_buffer_.reset();
         timer_.reset();
 
         // Set everything to safe defaults
-        msg_.toggle_latch = true;  // closed
-        msg_.toggle_vibe = false;   // off
-        msg_.excavate_cmd = 0.0;
-        msg_.la_cmd = 0.0;
+        manual_msg_.toggle_latch = true; // closed
+        manual_msg_.toggle_vibe = false; // off
+        manual_msg_.excavate_cmd = 0.0;
+        manual_msg_.la_cmd = 0.0;
+        sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
 
         RCLCPP_INFO(get_node()->get_logger(), "Cleaned up CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -94,21 +101,23 @@ namespace command_center
         timer_.reset();
 
         // Set everything to safe defaults
-        msg_.toggle_latch = true;  // closed
-        msg_.toggle_vibe = false;   // off
-        msg_.excavate_cmd = 0.0;
-        msg_.la_cmd = 0.0;
+        manual_msg_.toggle_latch = true; // closed
+        manual_msg_.toggle_vibe = false; // off
+        manual_msg_.excavate_cmd = 0.0;
+        manual_msg_.la_cmd = 0.0;
+        sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
 
         RCLCPP_INFO(get_node()->get_logger(), "Shut down CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
+    // TODO: This needs to go in tibble_controller.cpp
     void CommandCenter::change_state_callback(
         const std::shared_ptr<interfaces::srv::ChangeState::Request> request,
         std::shared_ptr<interfaces::srv::ChangeState::Response> response)
     {
         // might be a good idea to make some sort of not safe to transition states logic?
-        if (request->requested_state >= State::STATE_NR_ITEMS || request->requested_state < 0)
+        if (request->requested_state >= ControlState::STATE_NR_ITEMS || request->requested_state < 0)
         {
             response->success = false;
             response->message = "Invalid state requested.";
@@ -116,7 +125,7 @@ namespace command_center
         }
 
         // This is casting to an enum type rather than purely numerical
-        current_state_.store(static_cast<State>(request->requested_state));
+        current_state_.store(static_cast<ControlState>(request->requested_state));
 
         response->success = true;
         response->message = "State successfully transitioned to %d", request->requested_state;
@@ -127,18 +136,53 @@ namespace command_center
     {
         auto joy_msg = joy_cmd_buffer_.readFromRT();
 
-        // TODO: Panic/start button logic
-        // TODO: mode switch logic
+        // Universal button logic (any control mode can access these at any time)
+        if (joy_msg->buttons[modes_panic_b_] && current_state_ != ControlState::PANIC)
+        {
+            // TODO: state change request
+            previous_state_ = current_state_;
+            current_state_ = ControlState::PANIC;
+        }
+        else if (joy_msg->buttons[modes_enable_b_] && current_state_ == ControlState::PANIC) // Throw into manual if enabled after panic
+        {
+            // TODO: state change request
+            previous_state_ = current_state_;
+            current_state_ = ControlState::MANUAL;
+        }
+        else if (joy_msg->buttons[modes_manual_b_] && current_state_ != ControlState::MANUAL)   // Redundant but easier to read
+        {
+            // TODO: state change request
+            previous_state_ = current_state_;
+            current_state_ = ControlState::MANUAL;
+        }
+        else if (joy_msg->buttons[modes_state_machine_b_] && current_state_ != ControlState::STATE_MACHINE)
+        {
+            // TODO: state change request
+            previous_state_ = current_state_;
+            current_state_ = ControlState::STATE_MACHINE;
+        }
+        else if (joy_msg->buttons[modes_autonomy_b_] && current_state_ != ControlState::AUTONOMY)
+        {
+            // TODO: state change request
+            previous_state_ = current_state_;
+            current_state_ = ControlState::AUTONOMY;
+        }
 
-        // TODO: Figure out how to do this lol
-        switch (current_state_) {
-            case State::STATE_MACHINE:
-                return;
-            case State::MANUAL:
-                return;
-            default:
-                RCLCPP_ERROR(get_node()->get_logger(), "Unknown state.");
-                return;
+
+        // TODO: Publish to the respective topics
+        switch (current_state_)
+        {
+        case ControlState::STATE_MACHINE:
+            return;
+        case ControlState::MANUAL:
+            return;
+        case ControlState::AUTONOMY:
+            return; // This will remain unimplemented for now
+        case ControlState::PANIC: // Do nothing
+            return;
+        default:
+            RCLCPP_ERROR(get_node()->get_logger(), "Unknown state.");
+            return;
         }
     }
 

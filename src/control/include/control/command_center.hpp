@@ -18,7 +18,8 @@
 #include "sensor_msgs/msg/joy.hpp"
 
 #include "interfaces/srv/change_state.hpp"
-#include "interfaces/msg/commands.hpp"
+#include "interfaces/msg/manual_commands.hpp"
+#include "interfaces/msg/state_machine_commands.hpp"
 
 namespace command_center
 {
@@ -48,8 +49,8 @@ namespace command_center
 
     private:
         // Parameters from YAML
-        std::string enable_b_; // b = button
-        std::string panic_b_;
+        std::string modes_enable_b_; // b = button
+        std::string modes_panic_b_;
         std::string modes_state_machine_b_;
         std::string modes_manual_b_;
         std::string modes_autonomy_b_;
@@ -64,15 +65,19 @@ namespace command_center
         std::string manual_excav_axis_;
 
         // Internal variables
-        std::atomic<State> current_state_;
+        std::atomic<ControlState> current_state_;   // atomic just means it is safe to share between multiple threads (necessary for real time)
+        std::atomic<ControlState> previous_state_;  // needed for transition logic
         std::shared_ptr<rclcpp::TimerBase> timer_;
-        auto msg_ = interfaces::msg::Commands();
+        auto manual_msg_ = interfaces::msg::ManualCommands();
+        auto sm_msg_ = interfaces::msg::StateMachineCommands(); // sm = state machine always in these files
 
         // Subs
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
+        // Eventually something like nav2 commands sub will go here
 
         // Pubs
-        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>> command_pub_;
+        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>> manual_command_pub_;
+        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>> sm_command_pub_;
 
         // Realtime buffers
         realtime_tools::RealtimeBuffer<sensor_msgs::msg::Joy> joy_cmd_buffer_;
@@ -80,11 +85,13 @@ namespace command_center
         // Service server
         rclcpp::Service<interfaces::srv::ChangeState>::SharedPtr change_state_service_;
 
-        // State enum
-        enum class State
+        // State enum for the control schema (NOT THE SAME AS THE STATE MACHINE)
+        enum class ControlState
         {
-            STATE_MACHINE,
             MANUAL,
+            STATE_MACHINE,
+            AUTONOMY,
+            PANIC,          // shut EVERYTHING down, not commands get processed or sent besides start to remove panic
             STATE_NR_ITEMS, // NOT A REAL STATE, this is just for bounds checking
         };
 
