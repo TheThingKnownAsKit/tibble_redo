@@ -22,6 +22,7 @@ namespace command_center
 
         manual_command_pub_ = this->create_publisher<interfaces::msg::ManualCommands>("/manual_commands", rclcpp::SystemDefaultsQoS());
         sm_command_pub_ = this->create_publisher<interfaces::msg::StateMachineCommands>("/state_machine_commands", rclcpp::SystemDefaultsQoS());
+        // Maybe one for autonomy pub????
 
         change_state_service_ = get_node()->create_service<interfaces::srv::ChangeState>(
             "/change_state",
@@ -149,7 +150,7 @@ namespace command_center
             previous_state_ = current_state_;
             current_state_ = ControlState::MANUAL;
         }
-        else if (joy_msg->buttons[modes_manual_b_] && current_state_ != ControlState::MANUAL)   // Redundant but easier to read
+        else if (joy_msg->buttons[modes_manual_b_] && current_state_ != ControlState::MANUAL) // Redundant but easier to read
         {
             // TODO: state change request
             previous_state_ = current_state_;
@@ -168,16 +169,68 @@ namespace command_center
             current_state_ = ControlState::AUTONOMY;
         }
 
-
-        // TODO: Publish to the respective topics
+        // TODO: Test and maybe implement float tolerance (rn its all digital and some buttons can produce analog like mode buttonss)
         switch (current_state_)
         {
         case ControlState::STATE_MACHINE:
+            // Pressing more than one state button at once will result in no action (which is what the monster if statements check)
+
+            // If ONLY the idle button is pressed
+            if (joy_msg->buttons[sm_idle_b_] == 1 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_0] == 0 && joy_msg->buttons[sm_deposit_b_] == 0)
+            {
+                sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
+            }
+            // If ONLY the travel button is pressed
+            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 1 && joy_msg->buttons[sm_excavate_b_0] == 0 && joy_msg->buttons[sm_deposit_b_] == 0)
+            {
+                sm_msg_.state = interfaces::msg::StateMachineCommands::TRAVEL;
+            }
+            // If ONLY the excavate button is pressed
+            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_0] == 1 && joy_msg->buttons[sm_deposit_b_] == 0)
+            {
+                sm_msg_.state = interfaces::msg::StateMachineCommands::EXCAVATE;
+            }
+            // If ONLY the deposit button is pressed
+            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_0] == 0 && joy_msg->buttons[sm_deposit_b_] == 1)
+            {
+                sm_msg_.state = interfaces::msg::StateMachineCommands::DEPOSIT;
+            }
+
+            sm_command_pub_->publish(sm_msg_);
             return;
         case ControlState::MANUAL:
+
+            // Toggle logic, if button is pressed swap it to whatever the opposite it is right now
+            if (joy_msg->buttons[manual_latch_toggle_b_])
+            {
+                manual_msg_.toggle_latch = !manual_msg_.toggle_latch;
+            }
+            if (joy_msg->buttons[manual_vibe_toggle_b_])
+            {
+                manual_msg_.toggle_vibe = !manual_msg_.toggle_vibe;
+            }
+
+            // LA logic, if both or neither buttons are pressed send no movement command
+            if (joy_msg->buttons[manual_la_extend_b_] == 1 && joy_msg->buttons[manual_la_retract_b_] == 0)
+            {
+                manual_msg_.la_cmd = joy_msg->buttons[manual_la_extend_b_];
+            }
+            else if (joy_msg->buttons[manual_la_extend_b_] == 0 && joy_msg->buttons[manual_la_retract_b_] == 1)
+            {
+                manual_msg_.la_cmd = joy_msg->buttons[manual_la_retract_b_];
+            }
+            else
+            {
+                manual_msg_.la_cmd = 0;
+            }
+
+            // No extra logic is needed, throw it directly in
+            manual_msg_.excavate_cmd = joy_msg->buttons[manual_excav_axis_];
+
+            manual_command_pub_->publish(manual_msg_);
             return;
         case ControlState::AUTONOMY:
-            return; // This will remain unimplemented for now
+            return;               // This will remain unimplemented for now
         case ControlState::PANIC: // Do nothing
             return;
         default:
@@ -198,4 +251,4 @@ namespace command_center
         rclcpp::shutdown();
         return 0;
     }
-} // namespace command_center
+} // namespace command_center0
