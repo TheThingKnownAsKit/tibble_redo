@@ -108,7 +108,7 @@ namespace command_center
         std::shared_ptr<interfaces::srv::ChangeState::Response> response)
     {
         // might be a good idea to make some sort of not safe to transition states logic?
-        if (request->requested_state > State::STATE_NR_ITEMS)
+        if (request->requested_state >= State::STATE_NR_ITEMS || request->requested_state < 0)
         {
             response->success = false;
             response->message = "Invalid state requested.";
@@ -136,8 +136,6 @@ namespace command_center
                 return;
             case State::MANUAL:
                 return;
-            case State::AUTONOMY:
-                return
             default:
                 RCLCPP_ERROR(get_node()->get_logger(), "Unknown state.");
                 return;

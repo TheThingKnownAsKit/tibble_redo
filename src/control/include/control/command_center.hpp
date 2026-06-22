@@ -85,7 +85,6 @@ namespace command_center
         {
             STATE_MACHINE,
             MANUAL,
-            AUTONOMY,
             STATE_NR_ITEMS, // NOT A REAL STATE, this is just for bounds checking
         };
 
