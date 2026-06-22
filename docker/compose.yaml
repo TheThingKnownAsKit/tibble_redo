@@ -9,47 +9,100 @@
 # 8. Real time scheduling enabled
 
 name: tibble_redo
+
+# Base configuration used by all profiles (this is called a YAML anchor, google it if confused, it's kinda like inheritance)
+x-tibble-base: &tibble-base
+  build:
+    context: ..   # Because the dockerfile is not in the repository root, this is required to set the context one directory up (root)
+    dockerfile: docker/Dockerfile # Path to dockerfile from the root
+
+  network_mode: host              # Share the same network stack as the host which Fast DDS needs
+  ipc: host                       # Allows shared memory with host (/dev/shm) which Fast DDS needs
+  privileged: true                # Full access to host devices and kernel features (/dev, usb, input, udev)
+
+  tty: true         # Keeps interactive terminal open
+  stdin_open: true  # Keeps interactive terminal open
+
+  volumes:
+    - ..:/workspaces/tibble_red                  # This repository binded as read/write
+    # You may be asking yourself why are we mounting udev, dev, and serial if this container is privileged?
+    # Great question, it's because making it privileged gives the container access to everything but the structure
+    # of the directories is not preserved or shared in full, so we need to explicitly bind them to make sure
+    # the program can find everything in the structure it expects and has access to everything (yes it's stupid)
+    - /run/udev:/run/udev:ro                    # Gives container access to udev metadata which helps identify USB devies (required for remote serial write)
+    - /dev/serial/by-id:/dev/serial/by-id:ro    # Binding this provides stable device naming (/dev/ttyUSB0 won't change)
+    - /dev:/dev                                 # Gives access to ALL devices (USB, input, cameras, etc)
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw          # Shares X server socket which is required for GUI apps on Linux
+    - ./config/zenoh:/config/zenoh              # The config directory for Zenoh
+
+  gpus: all         # mostly needed for Nvidia GPUs
+
+  cap_add:  # Add specific linux kernal capabilities to the container
+    - SYS_NICE      # For real-time scheduling, allows setting thread priority
+
+  group_add:    # Add the container to the following groups
+    - dialout   # dialout is for serial device access
+    - video     # video is for GPU/camera access
+    - input     # input is for gamepad
+
+  environment:
+    - DISPLAY=:0                  # Tells the GUI apps where to render (current display)
+    - QT_X11_NO_MITSHM=1          # Prevents Qt crashes in containers
+    - ROS_DOMAIN_ID=0             # Explicitly sets the DDS domain
+    - QT_QPA_PLATFORM=xcb         # Forces X11 backend to avoid wayland compatibility issues
+
 services:
-  tibble_redo:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    network_mode: host              # Share the same network stack as the host which Fast DDS needs
-    ipc: host                       # Allows shared memory with host (/dev/shm) which Fast DDS needs
-    privileged: true                # Full access to host devices and kernel features (/dev, usb, input, udev)
+  # This is the DEFAULT PROFILE of the tibble service
+  # It assumes the iplink router is not being used but remote control is wanted
+  # So it sets up Zenoh but not the router
+  tibble_remote:
+    <<: *tibble-base  # inherit from the tibble-base anchor defined above
+
+    container_name: tibble
+
     environment:
-      - DISPLAY=:0                  # Tells the GUI apps where to render (current display)
-      - QT_X11_NO_MITSHM=1          # Prevents Qt crashes in containers
-      - ROS_DOMAIN_ID=0             # Explicitly sets the DDS domain
-      - QT_QPA_PLATFORM=xcb         # Forces X11 backend to avoid wayland compatibility issues
-      - RMW_IMPLEMENTATION=rmw_zenoh_cpp                                            # Swith ROS middleware from DDS to Zenoh
-      - ZENOH_CONFIG_OVERRIDE=mode="client";connect/endpoints=["${ZENOH_ADDRESS}"]  # Connects to the Zenoh router
+      - RMW_IMPLEMENTATION=rmw_zenoh_cpp
+      - ZENOH_CONFIG=/config/zenoh/remote.json5
+
+  # This is the competition grade docker setup
+  # It assumes the iplink router is being used with Zenoh
+  tibble_competition:
+    <<: *tibble-base  # inherit from the tibble-base anchor defined above
+
+    container_name: tibble
+
+    environment:
+          - RMW_IMPLEMENTATION=rmw_zenoh_cpp
+          - ZENOH_CONFIG=/config/zenoh/competition_client.json5
+    
+    # This service uses another service to set up the Zenoh router
+    depends_on:
+      - zenoh_router
+    
+    # This profile is only used when composed with docker compose --profile competition up
+    profiles:
+      - competition
+
+  zenoh_router:
+    image: eclipse/zenoh:latest
+    command: ["zenohd", "-c", "/config/competition_router.json5"]
+
     volumes:
-      # You may be asking yourself why are we mounting udev, dev, and serial if this container is privileged?
-      # Great question, it's because making it privileged gives the container access to everything but the structure
-      # of the directories is not preserved or shared in full, so we need to explicitly bind them to make sure
-      # the program can find everything in the structure it expects and has access to everything (yes it's stupid)
-      - type: bind                  # Gives container access to udev metadata which helps identify USB devies (required for remote serial write)
-        source: /run/udev
-        target: /run/udev
-        read_only: true
-      - type: bind                  # Binding this provides stable device naming (/dev/ttyUSB0 won't change)
-        source: /dev/serial/by-id
-        target: /dev/serial/by-id
-        read_only: true
-      - type: bind                  # Gives access to ALL devices (USB, input, cameras, etc)
-        source: /dev
-        target: /dev
-        read_only: true
-      - type: bind                  # This repository binded as read/write
-        source: ..
-        target: /workspaces/tibble_redo
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # Shares X server socket which is required for GUI apps on Linux
-    cap_add:
-      - SYS_NICE      # For real-time scheduling, allows setting thread priority
-    tty: true         # Keeps interactive terminal open
-    stdin_open: true  # Keeps interactive terminal open
-    group_add:    # Add the container to the following groups
-      - dialout   # dialout is for serial device access
-      - video     # video is for GPU/camera access
-      - input     # input is for gamepad
+          - ./config/zenoh:/config
+    
+    network_mode: host
+
+    profiles:
+    - competition
+  
+  # This service assumes you are only using one machine for development or using wired control
+  tibble_wired:
+    <<: *tibble-base  # inherit from the tibble-base anchor defined above
+
+    container_name: tibble
+
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+
+    profiles:
+      - wired

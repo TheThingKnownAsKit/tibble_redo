@@ -1,0 +1,15 @@
+{
+  mode: "client",
+
+  connect: {
+    endpoints: [
+      "tcp/${ZENOH_ROUTER_IP}:7447"
+    ]
+  },
+
+  scouting: {
+    multicast: {
+      enabled: false
+    }
+  }
+}
