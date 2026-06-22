@@ -1,5 +1,7 @@
 command_center_node:
   ros__parameters:
+    # Mappings can be found under the game_controller_node index map https://index.ros.org/p/joy/
+    
     # Universal buttons
     enable_b: START
     panic_b: BACK     # Sometimes listed as SELECT on controllers

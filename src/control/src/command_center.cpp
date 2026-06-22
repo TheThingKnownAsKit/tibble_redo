@@ -4,24 +4,80 @@ using namespace std::chrono_literals; // lets things like ms register as millise
 
 namespace command_center
 {
+
+    int button_name_to_index(const std::string &name)
+    {
+        // Mappings can be found under the game_controller_node index map https://index.ros.org/p/joy/
+        // This is specifically for XBox style controllers, but there are PS options
+        static const std::unordered_map<std::string, int> map = {
+            {"A", 0},
+            {"B", 1},
+            {"X", 2},
+            {"Y", 3},
+            {"BACK", 4},
+            {"GUIDE", 5}
+            {"START", 6},
+            {"LEFTSTICK", 7},
+            {"RIGHTSTICK", 8},
+            {"LEFTSHOULDER", 9},
+            {"RIGHTSHOULDER", 10},
+            {"DPAD_UP", 11},
+            {"DPAD_DOWN", 12},
+            {"DPAD_LEFT", 13},
+            {"DPAD_RIGHT", 14},
+            {"MISC1", 15},
+            {"PADDLE1", 16},
+            {"PADDLE2", 17},
+            {"PADDLE3", 18},
+            {"PADDLE4", 19},
+            {"TOUCHPAD", 20},
+        };
+
+        auto it = map.find(name);
+        if (it != map.end())
+            return it->second;
+
+        throw std::runtime_error("Unknown button: " + name);
+    }
+
+    int axis_name_to_index(const std::string &name)
+    {
+        // Mappings can be found under the game_controller_node index map https://index.ros.org/p/joy/
+        // This is specifically for XBox style controllers, but there are PS options
+        static const std::unordered_map<std::string, int> map = {
+            {"LEFTX", 0},
+            {"LEFTY", 1},
+            {"RIGHTX", 2},
+            {"RIGHTY", 3},
+            {"TRIGGERLEFT", 4},
+            {"TRIGGERRIGHT", 5},
+        };
+
+        auto it = map.find(name);
+        if (it != map.end())
+            return it->second;
+
+        throw std::runtime_error("Unknown axes: " + name);
+    }
+
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_configure(const rclcpp_lifecycle::State &)
     {
         // TODO: Map param strings to index numbers because of error
-        modes_enable_b_ = this->get_parameter("enable_b").as_string();
-        modes_panic_b_ = this->get_parameter("panic_b").as_string();
-        modes_state_machine_b_ = this->get_parameter("state_machine_b").as_string();
-        modes_manual_b_ = this->get_parameter("manual_b").as_string();
-        modes_autonomy_b_ = this->get_parameter("autonomy_b").as_string();
-        sm_idle_b_ = this->get_parameter("idle_b").as_string();
-        sm_travel_b_ = this->get_parameter("travel_b").as_string();
-        sm_excavate_b_ = this->get_parameter("excavate_b").as_string();
-        sm_deposit_b_ = this->get_parameter("deposit_b").as_string();
-        manual_la_extend_b_ = this->get_parameter("la_extend_b").as_string();
-        manual_la_retract_b_ = this->get_parameter("la_retract_b").as_string();
-        manual_latch_toggle_b_ = this->get_parameter("latch_toggle_b").as_string();
-        manual_vibe_toggle_b_ = this->get_parameter("vibe_toggle_b").as_string();
-        manual_excav_axis_ = this->get_parameter("excav_axis").as_string();
+        modes_enable_b_ = button_name_to_index(this->get_parameter("enable_b").as_string());
+        modes_panic_b_ = button_name_to_index(this->get_parameter("panic_b").as_string());
+        modes_state_machine_b_ = button_name_to_index(this->get_parameter("state_machine_b").as_string());
+        modes_manual_b_ = button_name_to_index(this->get_parameter("manual_b").as_string());
+        modes_autonomy_b_ = button_name_to_index(this->get_parameter("autonomy_b").as_string());
+        sm_idle_b_ = button_name_to_index(this->get_parameter("idle_b").as_string());
+        sm_travel_b_ = button_name_to_index(this->get_parameter("travel_b").as_string());
+        sm_excavate_b_ = button_name_to_index(this->get_parameter("excavate_b").as_string());
+        sm_deposit_b_ = button_name_to_index(this->get_parameter("deposit_b").as_string());
+        manual_la_extend_b_ = button_name_to_index(this->get_parameter("la_extend_b").as_string());
+        manual_la_retract_b_ = button_name_to_index(this->get_parameter("la_retract_b").as_string());
+        manual_latch_toggle_b_ = button_name_to_index(this->get_parameter("latch_toggle_b").as_string());
+        manual_vibe_toggle_b_ = button_name_to_index(this->get_parameter("vibe_toggle_b").as_string());
+        manual_excav_axis_ = axes_name_to_index(this->get_parameter("excav_axis").as_string());
 
         manual_command_pub_ = this->create_publisher<interfaces::msg::ManualCommands>("/manual_commands", rclcpp::SystemDefaultsQoS());
         sm_command_pub_ = this->create_publisher<interfaces::msg::StateMachineCommands>("/state_machine_commands", rclcpp::SystemDefaultsQoS());

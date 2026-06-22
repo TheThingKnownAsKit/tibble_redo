@@ -66,20 +66,20 @@ namespace command_center
         void CommandCenter::control_loop();
 
         // Parameters from YAML
-        std::string modes_enable_b_; // b = button
-        std::string modes_panic_b_;
-        std::string modes_state_machine_b_;
-        std::string modes_manual_b_;
-        std::string modes_autonomy_b_;
-        std::string sm_idle_b_; // sm = state machine
-        std::string sm_travel_b_;
-        std::string sm_excavate_b_;
-        std::string sm_deposit_b_;
-        std::string manual_la_extend_b_;
-        std::string manual_la_retract_b_;
-        std::string manual_latch_toggle_b_;
-        std::string manual_vibe_toggle_b_;
-        std::string manual_excav_axis_;
+        int modes_enable_b_; // b = button
+        int modes_panic_b_;
+        int modes_state_machine_b_;
+        int modes_manual_b_;
+        int modes_autonomy_b_;
+        int sm_idle_b_; // sm = state machine
+        int sm_travel_b_;
+        int sm_excavate_b_;
+        int sm_deposit_b_;
+        int manual_la_extend_b_;
+        int manual_la_retract_b_;
+        int manual_latch_toggle_b_;
+        int manual_vibe_toggle_b_;
+        int manual_excav_axis_;
 
         // Internal variables
         std::atomic<ControlState> current_state_;   // atomic just means it is safe to share between multiple threads (necessary for real time)
