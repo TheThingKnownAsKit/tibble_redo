@@ -7,6 +7,7 @@
 #include <thread>
 #include <utility>
 #include <atomic>
+#include <unordered_map>
 
 #include "lifecycle_msgs/msg/transition.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -63,7 +64,7 @@ namespace command_center
             const std::shared_ptr<interfaces::srv::ChangeState::Request> request,
             std::shared_ptr<interfaces::srv::ChangeState::Response> response);
 
-        void CommandCenter::control_loop();
+        void control_loop();
 
         // Parameters from YAML
         int modes_enable_b_; // b = button

@@ -15,7 +15,7 @@ namespace command_center
             {"X", 2},
             {"Y", 3},
             {"BACK", 4},
-            {"GUIDE", 5}
+            {"GUIDE", 5},
             {"START", 6},
             {"LEFTSTICK", 7},
             {"RIGHTSTICK", 8},
@@ -77,7 +77,7 @@ namespace command_center
         manual_la_retract_b_ = button_name_to_index(this->get_parameter("la_retract_b").as_string());
         manual_latch_toggle_b_ = button_name_to_index(this->get_parameter("latch_toggle_b").as_string());
         manual_vibe_toggle_b_ = button_name_to_index(this->get_parameter("vibe_toggle_b").as_string());
-        manual_excav_axis_ = axes_name_to_index(this->get_parameter("excav_axis").as_string());
+        manual_excav_axis_ = axis_name_to_index(this->get_parameter("excav_axis").as_string());
 
         manual_command_pub_ = this->create_publisher<interfaces::msg::ManualCommands>("/manual_commands", rclcpp::SystemDefaultsQoS());
         sm_command_pub_ = this->create_publisher<interfaces::msg::StateMachineCommands>("/state_machine_commands", rclcpp::SystemDefaultsQoS());
@@ -104,7 +104,7 @@ namespace command_center
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_activate(const rclcpp_lifecycle::State &state)
     {
-        current_state_.store(ControlState::PANIC); 
+        current_state_.store(ControlState::PANIC);
 
         // Set everything to safe defaults
         manual_msg_.toggle_latch = true; // closed
@@ -124,7 +124,7 @@ namespace command_center
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_deactivate(const rclcpp_lifecycle::State &state)
     {
-        current_state_.store(ControlState::PANIC); 
+        current_state_.store(ControlState::PANIC);
 
         manual_command_pub_->on_deactivate();
         sm_command_pub_->on_deactivate();
@@ -156,6 +156,8 @@ namespace command_center
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_shutdown(const rclcpp_lifecycle::State &state)
     {
+        (void)state; // Silence unused param warning
+
         manual_command_pub_.reset();
         sm_command_pub_.reset();
         joy_cmd_buffer_.reset();
@@ -202,35 +204,35 @@ namespace command_center
         {
             // TODO: state change request
             previous_state_.store(current_state_.load());
-            current_state_ = ControlState::PANIC;
+            current_state_.store(ControlState::PANIC);
         }
         else if (joy_msg->buttons[modes_enable_b_] && current_state_.load() == ControlState::PANIC) // Throw into manual if enabled after panic
         {
             // TODO: state change request
             previous_state_.store(current_state_.load());
-            current_state_ = ControlState::MANUAL;
+            current_state_.store(ControlState::MANUAL);
         }
         else if (joy_msg->buttons[modes_manual_b_] && current_state_.load() != ControlState::MANUAL) // Redundant but easier to read
         {
             // TODO: state change request
             previous_state_.store(current_state_.load());
-            current_state_ = ControlState::MANUAL;
+            current_state_.store(ControlState::MANUAL);
         }
         else if (joy_msg->buttons[modes_state_machine_b_] && current_state_.load() != ControlState::STATE_MACHINE)
         {
             // TODO: state change request
             previous_state_.store(current_state_.load());
-            current_state_ = ControlState::STATE_MACHINE;
+            current_state_.store(ControlState::STATE_MACHINE);
         }
         else if (joy_msg->buttons[modes_autonomy_b_] && current_state_.load() != ControlState::AUTONOMY)
         {
             // TODO: state change request
             previous_state_.store(current_state_.load());
-            current_state_ = ControlState::AUTONOMY;
+            current_state_.store(ControlState::AUTONOMY);
         }
 
         // TODO: Test and maybe implement float tolerance (rn its all digital and some buttons can produce analog like mode buttonss)
-        switch (current_state_)
+        switch (current_state_.load())
         {
         case ControlState::STATE_MACHINE:
             // Pressing more than one state button at once will result in no action (which is what the monster if statements check)
@@ -298,17 +300,17 @@ namespace command_center
             return;
         }
     }
-
-    int main(int argc, char *argv[])
-    {
-        setvbuf(stdout, NULL, _IONBF, BUFSIZ);
-        rclcpp::init(argc, argv);
-        rclcpp::executors::SingleThreadedExecutor exe;
-        std::shared_ptr<CommandCenter> command_center_node =
-            std::make_shared<CommandCenter>("command_center");
-        exe.add_node(command_center_node->get_node_base_interface());
-        exe.spin();
-        rclcpp::shutdown();
-        return 0;
-    }
 } // namespace command_center
+
+int main(int argc, char *argv[])
+{
+    setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+    rclcpp::init(argc, argv);
+    rclcpp::executors::SingleThreadedExecutor exe;
+    std::shared_ptr<command_center::CommandCenter> command_center_node =
+        std::make_shared<command_center::CommandCenter>("command_center");
+    exe.add_node(command_center_node->get_node_base_interface());
+    exe.spin();
+    rclcpp::shutdown();
+    return 0;
+}
