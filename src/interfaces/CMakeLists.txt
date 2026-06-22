@@ -11,7 +11,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 # Add new messages or services here
 set(msg_files
-  "msg/Commands.msg"
+  "msg/ManualCommands.msg"
+  "msg/StateMachineCommands.msg"
 )
 set(srv_files
   "srv/ChangeState.srv"
