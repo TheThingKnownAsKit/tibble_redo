@@ -13,12 +13,14 @@ ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 ENV PYTHONPATH="${PYTHONPATH}:/usr/local/lib"
 
 #################### SYSTEM + DEV TOOLS ####################
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Cache the downloads to speed up rebuilds
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     # Core system
     ca-certificates \
     curl \
     gnupg \
-    gnupg2 \
     lsb-release \
     apt-transport-https \
     wget \
@@ -39,34 +41,36 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pipx \
     python-is-python3 \
     \
-    # GUI libs
+    # GUI libs (some of these might be unnecessary, test it later TODO)
     libegl1-mesa-dev \
     libglu1-mesa-dev \
     libxv1 \
-    libxtst6 \
-    \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    libxtst6
 
 #################### PLATFORMIO ####################
 RUN pipx install platformio && pipx ensurepath
 
 #################### ROS PACKAGES ####################
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ROS_DISTRO}-desktop \
+# Cache the downloads to speed up rebuilds
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-joint-state-publisher-gui \
     ros-${ROS_DISTRO}-robot-state-publisher \
     ros-${ROS_DISTRO}-rmw-zenoh-cpp \
-    ros-${ROS_DISTRO}-foxglove-bridge \
-    \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    ros-${ROS_DISTRO}-foxglove-bridge
 
 #################### CTRE PHOENIX ####################
 RUN curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg" && \
     curl -s --compressed -o /etc/apt/sources.list.d/ctr2026.list "https://deb.ctr-electronics.com/ctr2026.list" && \
-    sed -i 's/signed-by=/arch=amd64 signed-by=/' /etc/apt/sources.list.d/ctr2026.list && \
+    sed -i 's/signed-by=/arch=amd64 signed-by=/' /etc/apt/sources.list.d/ctr2026.list
+
+# Cache for faster rebuilds
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
     apt-get update && \
     apt-get install -y --no-install-recommends phoenix6
 
@@ -98,7 +102,7 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" \
 
 #################### USER ENV ####################
 USER $USERNAME
-WORKDIR /workspaces/2026-Tibble-Bot/
+WORKDIR /workspaces/tibble_redo/
 
 RUN mkdir -p ~/.colcon && \
     printf "build:\n  symlink-install: true\n  cmake-args: [\"-DPython3_EXECUTABLE=/usr/bin/python3\"]\n" \
