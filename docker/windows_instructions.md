@@ -54,6 +54,9 @@ Now, we are going to configure WSL for you to be able to work in it regularly. T
 
 The repository is now fully downloaded into WSL. You can now work directly in this installation. I recommend setting up VSCode to work with this.
 
+DO THIS TO RUN DOCKER IN WSL WITHOUT DOCKER DESKTOP: https://medium.com/geekculture/run-docker-in-windows-10-11-wsl-without-docker-desktop-a2a7eb90556d
+DO THIS TO RUN DOCKER IN WSL WITH DOCKER DESKTOP: https://docs.docker.com/desktop/features/wsl/ 
+
 ## USB Passthrough
 
 Follow these instructions to set up usb pass through to WSL (https://learn.microsoft.com/en-us/windows/wsl/connect-usb). Otherwise, nothing connected to your computer by USB will be accessible by WSL.

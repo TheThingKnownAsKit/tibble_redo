@@ -30,9 +30,10 @@ STRETCH GOALS (not in order of importance)
     - otherwise assume only encoders
 5. zenoh implementation
 6. nav2 implementation
-7. docker rewrite
+7. docker rewrite [ DONE ]
     - support for windows with wsl? cant do usb pass through but can do general development with keyboard as controller maybe
-8. look into ignition by inductive automation (the telemetry service NOT gazebo)
+8. look into ignition by inductive automation (the telemetry service NOT gazebo) [ DONE ]
+    - not worth
 9. reduce bandwidth?
 10. actual in repo documentation like repo README.md and package level README's 
 11. script that parses OnShape generated URDF and turns it into the xacro format we like????? thatd be cool
