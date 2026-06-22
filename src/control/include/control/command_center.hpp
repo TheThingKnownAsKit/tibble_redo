@@ -48,6 +48,23 @@ namespace command_center
         on_shutdown(const rclcpp_lifecycle::State &state);
 
     private:
+        // State enum for the control schema (NOT THE SAME AS THE STATE MACHINE)
+        enum class ControlState
+        {
+            MANUAL,
+            STATE_MACHINE,
+            AUTONOMY,
+            PANIC,          // shut EVERYTHING down, not commands get processed or sent besides start to remove panic
+            STATE_NR_ITEMS, // NOT A REAL STATE, this is just for bounds checking
+        };
+
+        // Functions
+        void change_state_callback(
+            const std::shared_ptr<interfaces::srv::ChangeState::Request> request,
+            std::shared_ptr<interfaces::srv::ChangeState::Response> response);
+
+        void CommandCenter::control_loop();
+
         // Parameters from YAML
         std::string modes_enable_b_; // b = button
         std::string modes_panic_b_;
@@ -68,40 +85,23 @@ namespace command_center
         std::atomic<ControlState> current_state_;   // atomic just means it is safe to share between multiple threads (necessary for real time)
         std::atomic<ControlState> previous_state_;  // needed for transition logic
         std::shared_ptr<rclcpp::TimerBase> timer_;
-        auto manual_msg_ = interfaces::msg::ManualCommands();
-        auto sm_msg_ = interfaces::msg::StateMachineCommands(); // sm = state machine always in these files
+        interfaces::msg::ManualCommands manual_msg_ = interfaces::msg::ManualCommands();
+        interfaces::msg::StateMachineCommands sm_msg_ = interfaces::msg::StateMachineCommands(); // sm = state machine always in these files
 
         // Subs
         rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
         // Eventually something like nav2 commands sub will go here
 
         // Pubs
-        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>> manual_command_pub_;
-        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::String>> sm_command_pub_;
+        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<interfaces::msg::ManualCommands>> manual_command_pub_;
+        std::shared_ptr<rclcpp_lifecycle::LifecyclePublisher<interfaces::msg::StateMachineCommands>> sm_command_pub_;
 
         // Realtime buffers
         realtime_tools::RealtimeBuffer<sensor_msgs::msg::Joy> joy_cmd_buffer_;
 
         // Service server
         rclcpp::Service<interfaces::srv::ChangeState>::SharedPtr change_state_service_;
-
-        // State enum for the control schema (NOT THE SAME AS THE STATE MACHINE)
-        enum class ControlState
-        {
-            MANUAL,
-            STATE_MACHINE,
-            AUTONOMY,
-            PANIC,          // shut EVERYTHING down, not commands get processed or sent besides start to remove panic
-            STATE_NR_ITEMS, // NOT A REAL STATE, this is just for bounds checking
-        };
-
-        // Functions
-        void change_state_callback(
-            const std::shared_ptr<interfaces::srv::ChangeState::Request> request,
-            std::shared_ptr<interfaces::srv::ChangeState::Response> response);
-
-        void control_loop();
-    }
+    };
 } // namespace command_center
 
 #endif // COMMAND_CENTER_HPP

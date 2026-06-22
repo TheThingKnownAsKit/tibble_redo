@@ -1,34 +1,37 @@
 #include "control/command_center.hpp"
 
+using namespace std::chrono_literals; // lets things like ms register as milliseconds
+
 namespace command_center
 {
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_configure(const rclcpp_lifecycle::State &)
     {
-        modes_enable_b_ = get_node()->get_parameter("enable_b").as_string();
-        modes_panic_b_ = get_node()->get_parameter("panic_b").as_string();
-        modes_state_machine_b_ = get_node()->get_parameter("state_machine_b").as_string();
-        modes_manual_b_ = get_node()->get_parameter("manual_b").as_string();
-        modes_autonomy_b_ = get_node()->get_parameter("autonomy_b").as_string();
-        sm_idle_b_ = get_node()->get_parameter("idle_b").as_string();
-        sm_travel_b_ = get_node()->get_parameter("travel_b").as_string();
-        sm_excavate_b_ = get_node()->get_parameter("excavate_b").as_string();
-        sm_deposit_b_ = get_node()->get_parameter("deposit_b").as_string();
-        manual_la_extend_b_ = get_node()->get_parameter("la_extend_b").as_string();
-        manual_la_retract_b_ = get_node()->get_parameter("la_retract_b").as_string();
-        manual_latch_toggle_b_ = get_node()->get_parameter("latch_toggle_b").as_string();
-        manual_vibe_toggle_b_ = get_node()->get_parameter("vibe_toggle_b").as_string();
-        manual_excav_axis_ = get_node()->get_parameter("excav_axis").as_string();
+        // TODO: Map param strings to index numbers because of error
+        modes_enable_b_ = this->get_parameter("enable_b").as_string();
+        modes_panic_b_ = this->get_parameter("panic_b").as_string();
+        modes_state_machine_b_ = this->get_parameter("state_machine_b").as_string();
+        modes_manual_b_ = this->get_parameter("manual_b").as_string();
+        modes_autonomy_b_ = this->get_parameter("autonomy_b").as_string();
+        sm_idle_b_ = this->get_parameter("idle_b").as_string();
+        sm_travel_b_ = this->get_parameter("travel_b").as_string();
+        sm_excavate_b_ = this->get_parameter("excavate_b").as_string();
+        sm_deposit_b_ = this->get_parameter("deposit_b").as_string();
+        manual_la_extend_b_ = this->get_parameter("la_extend_b").as_string();
+        manual_la_retract_b_ = this->get_parameter("la_retract_b").as_string();
+        manual_latch_toggle_b_ = this->get_parameter("latch_toggle_b").as_string();
+        manual_vibe_toggle_b_ = this->get_parameter("vibe_toggle_b").as_string();
+        manual_excav_axis_ = this->get_parameter("excav_axis").as_string();
 
         manual_command_pub_ = this->create_publisher<interfaces::msg::ManualCommands>("/manual_commands", rclcpp::SystemDefaultsQoS());
         sm_command_pub_ = this->create_publisher<interfaces::msg::StateMachineCommands>("/state_machine_commands", rclcpp::SystemDefaultsQoS());
         // Maybe one for autonomy pub????
 
-        change_state_service_ = get_node()->create_service<interfaces::srv::ChangeState>(
+        change_state_service_ = this->create_service<interfaces::srv::ChangeState>(
             "/change_state",
             std::bind(&CommandCenter::change_state_callback, this, std::placeholders::_1, std::placeholders::_2));
 
-        joy_sub_ = get_node()->create_subscription<sensor_msgs::msg::Joy>(
+        joy_sub_ = this->create_subscription<sensor_msgs::msg::Joy>(
             "/joy", rclcpp::SensorDataQoS(),
             [this](const sensor_msgs::msg::Joy::SharedPtr msg)
             {
@@ -38,14 +41,14 @@ namespace command_center
         // Psuedo realtime control/update function. Updates at 50Hz
         timer_ = this->create_wall_timer(50ms, std::bind(&CommandCenter::control_loop, this));
 
-        RCLCPP_INFO(get_node()->get_logger(), "Configured CommandCenter.");
+        RCLCPP_INFO(this->get_logger(), "Configured CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_activate(const rclcpp_lifecycle::State &state)
     {
-        current_state = STATE_IDLE;
+        current_state_.store(ControlState::PANIC); 
 
         // Set everything to safe defaults
         manual_msg_.toggle_latch = true; // closed
@@ -58,20 +61,20 @@ namespace command_center
         sm_command_pub_->on_activate();
         LifecycleNode::on_activate(state);
 
-        RCLCPP_INFO(get_node()->get_logger(), "Activated CommandCenter.");
+        RCLCPP_INFO(this->get_logger(), "Activated CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_deactivate(const rclcpp_lifecycle::State &state)
     {
-        current_state = STATE_IDLE;
+        current_state_.store(ControlState::PANIC); 
 
         manual_command_pub_->on_deactivate();
         sm_command_pub_->on_deactivate();
         LifecycleNode::on_deactivate(state);
 
-        RCLCPP_INFO(get_node()->get_logger(), "Deactivated CommandCenter.");
+        RCLCPP_INFO(this->get_logger(), "Deactivated CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
@@ -90,14 +93,15 @@ namespace command_center
         manual_msg_.la_cmd = 0.0;
         sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
 
-        RCLCPP_INFO(get_node()->get_logger(), "Cleaned up CommandCenter.");
+        RCLCPP_INFO(this->get_logger(), "Cleaned up CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
     CommandCenter::on_shutdown(const rclcpp_lifecycle::State &state)
     {
-        command_pub_.reset();
+        manual_command_pub_.reset();
+        sm_command_pub_.reset();
         joy_cmd_buffer_.reset();
         timer_.reset();
 
@@ -108,7 +112,7 @@ namespace command_center
         manual_msg_.la_cmd = 0.0;
         sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
 
-        RCLCPP_INFO(get_node()->get_logger(), "Shut down CommandCenter.");
+        RCLCPP_INFO(this->get_logger(), "Shut down CommandCenter.");
         return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
     }
 
@@ -118,7 +122,7 @@ namespace command_center
         std::shared_ptr<interfaces::srv::ChangeState::Response> response)
     {
         // might be a good idea to make some sort of not safe to transition states logic?
-        if (request->requested_state >= ControlState::STATE_NR_ITEMS || request->requested_state < 0)
+        if (request->requested_state >= static_cast<uint8_t>(ControlState::STATE_NR_ITEMS))
         {
             response->success = false;
             response->message = "Invalid state requested.";
@@ -129,43 +133,43 @@ namespace command_center
         current_state_.store(static_cast<ControlState>(request->requested_state));
 
         response->success = true;
-        response->message = "State successfully transitioned to %d", request->requested_state;
-        RCLCPP_INFO(get_node()->get_logger(), "Service call received: Switched to state %d", request->requested_state);
+        response->message = "State successfully transitioned.";
+        RCLCPP_INFO(this->get_logger(), "Service call received: Switched state.");
     }
 
-    void control_loop()
+    void CommandCenter::control_loop()
     {
         auto joy_msg = joy_cmd_buffer_.readFromRT();
 
         // Universal button logic (any control mode can access these at any time)
-        if (joy_msg->buttons[modes_panic_b_] && current_state_ != ControlState::PANIC)
+        if (joy_msg->buttons[modes_panic_b_] && current_state_.load() != ControlState::PANIC)
         {
             // TODO: state change request
-            previous_state_ = current_state_;
+            previous_state_.store(current_state_.load());
             current_state_ = ControlState::PANIC;
         }
-        else if (joy_msg->buttons[modes_enable_b_] && current_state_ == ControlState::PANIC) // Throw into manual if enabled after panic
+        else if (joy_msg->buttons[modes_enable_b_] && current_state_.load() == ControlState::PANIC) // Throw into manual if enabled after panic
         {
             // TODO: state change request
-            previous_state_ = current_state_;
+            previous_state_.store(current_state_.load());
             current_state_ = ControlState::MANUAL;
         }
-        else if (joy_msg->buttons[modes_manual_b_] && current_state_ != ControlState::MANUAL) // Redundant but easier to read
+        else if (joy_msg->buttons[modes_manual_b_] && current_state_.load() != ControlState::MANUAL) // Redundant but easier to read
         {
             // TODO: state change request
-            previous_state_ = current_state_;
+            previous_state_.store(current_state_.load());
             current_state_ = ControlState::MANUAL;
         }
-        else if (joy_msg->buttons[modes_state_machine_b_] && current_state_ != ControlState::STATE_MACHINE)
+        else if (joy_msg->buttons[modes_state_machine_b_] && current_state_.load() != ControlState::STATE_MACHINE)
         {
             // TODO: state change request
-            previous_state_ = current_state_;
+            previous_state_.store(current_state_.load());
             current_state_ = ControlState::STATE_MACHINE;
         }
-        else if (joy_msg->buttons[modes_autonomy_b_] && current_state_ != ControlState::AUTONOMY)
+        else if (joy_msg->buttons[modes_autonomy_b_] && current_state_.load() != ControlState::AUTONOMY)
         {
             // TODO: state change request
-            previous_state_ = current_state_;
+            previous_state_.store(current_state_.load());
             current_state_ = ControlState::AUTONOMY;
         }
 
@@ -176,22 +180,22 @@ namespace command_center
             // Pressing more than one state button at once will result in no action (which is what the monster if statements check)
 
             // If ONLY the idle button is pressed
-            if (joy_msg->buttons[sm_idle_b_] == 1 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_0] == 0 && joy_msg->buttons[sm_deposit_b_] == 0)
+            if (joy_msg->buttons[sm_idle_b_] == 1 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_] == 0 && joy_msg->buttons[sm_deposit_b_] == 0)
             {
                 sm_msg_.state = interfaces::msg::StateMachineCommands::IDLE;
             }
             // If ONLY the travel button is pressed
-            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 1 && joy_msg->buttons[sm_excavate_b_0] == 0 && joy_msg->buttons[sm_deposit_b_] == 0)
+            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 1 && joy_msg->buttons[sm_excavate_b_] == 0 && joy_msg->buttons[sm_deposit_b_] == 0)
             {
                 sm_msg_.state = interfaces::msg::StateMachineCommands::TRAVEL;
             }
             // If ONLY the excavate button is pressed
-            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_0] == 1 && joy_msg->buttons[sm_deposit_b_] == 0)
+            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_] == 1 && joy_msg->buttons[sm_deposit_b_] == 0)
             {
                 sm_msg_.state = interfaces::msg::StateMachineCommands::EXCAVATE;
             }
             // If ONLY the deposit button is pressed
-            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_0] == 0 && joy_msg->buttons[sm_deposit_b_] == 1)
+            else if (joy_msg->buttons[sm_idle_b_] == 0 && joy_msg->buttons[sm_travel_b_] == 0 && joy_msg->buttons[sm_excavate_b_] == 0 && joy_msg->buttons[sm_deposit_b_] == 1)
             {
                 sm_msg_.state = interfaces::msg::StateMachineCommands::DEPOSIT;
             }
@@ -225,7 +229,7 @@ namespace command_center
             }
 
             // No extra logic is needed, throw it directly in
-            manual_msg_.excavate_cmd = joy_msg->buttons[manual_excav_axis_];
+            manual_msg_.excavate_cmd = joy_msg->axes[manual_excav_axis_];
 
             manual_command_pub_->publish(manual_msg_);
             return;
@@ -234,7 +238,7 @@ namespace command_center
         case ControlState::PANIC: // Do nothing
             return;
         default:
-            RCLCPP_ERROR(get_node()->get_logger(), "Unknown state.");
+            RCLCPP_ERROR(this->get_logger(), "Unknown state.");
             return;
         }
     }
