@@ -54,6 +54,12 @@ Now, we are going to configure WSL for you to be able to work in it regularly. T
 
 The repository is now fully downloaded into WSL. You can now work directly in this installation. I recommend setting up VSCode to work with this.
 
+## USB Passthrough
+
+Follow these instructions to set up usb pass through to WSL (https://learn.microsoft.com/en-us/windows/wsl/connect-usb). Otherwise, nothing connected to your computer by USB will be accessible by WSL.
+
+**Note: the USB stack from Windows to WSL is terrible and barely works, especially for gamepads.** Because it is a Windows product, the USB passthrough is filled with redundancy that introduces latency. This is fine for things like serial communication, but for USBs with high input streams and required low latency (like a gamepad), this more often than not breaks it completely. It is unlikely that you will be able to get a gamepad to work with WSL unless you run the joy node on Windows and pass it through to WSL but that is more trouble than it's worth. Instead, use [teleop_twist_keyboard](https://docs.ros.org/en/ros2_packages/rolling/api/teleop_twist_keyboard/) to generate cmd_vel. Logic for keyboard based attachment control is a heavy maybe.
+
 ## VSCode Setup
 
 1. Open VSCode, it can be an empty window
