@@ -23,6 +23,7 @@ set(CONTROLLER_INCLUDE_DEPENDS  # Controller specific dependencies
 set(TIBBLE_INCLUDE_DEPENDS  # Multiple/all things need these dependencies
   rclcpp
   rclcpp_lifecycle
+  interfaces
 )
 
 # Specify the required version of ros2_control
@@ -46,8 +47,7 @@ endforeach()
 
 ##### COMPILE #####
 
-# Add executables here (.cpp files that are not the controller or hwc)
-
+# Compile all the custom controller and hardware interface stuff
 add_library(control SHARED
   src/tibble_controller.cpp
   src/tibble_hardware_interface.cpp
@@ -57,6 +57,7 @@ target_compile_features(control PUBLIC cxx_std_17)
 target_include_directories(control PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/control>
+
 )
 target_link_libraries(control PUBLIC
   controller_interface::controller_interface
@@ -64,6 +65,18 @@ target_link_libraries(control PUBLIC
   pluginlib::pluginlib
   realtime_tools::realtime_tools
 )
+
+# Add executables here (.cpp files that are not the controller or hwc)
+# More executables would just copy/paste the below three blocks and swap out names
+add_executable(command_center src/command_center.cpp)
+ament_target_dependencies(command_center
+  rclcpp
+  interfaces
+)
+target_link_libraries(command_center control)
+
+
+##### EXPORT + INSTALL #####
 
 pluginlib_export_plugin_description_file(hardware_interface tibble_hardware_interface.xml)
 pluginlib_export_plugin_description_file(controller_interface tibble_controller.xml)
@@ -84,7 +97,10 @@ install(
   RUNTIME DESTINATION bin
 )
 
-# Ament Exports
 ament_export_targets(export_control HAS_LIBRARY_TARGET)
-ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_export_dependencies(
+  ${HW_COMP_INCLUDE_DEPENDS}
+  ${CONTROLLER_INCLUDE_DEPENDS}
+  ${TIBBLE_INCLUDE_DEPENDS}
+)
 ament_package()
