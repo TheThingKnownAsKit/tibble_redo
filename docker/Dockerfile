@@ -5,6 +5,8 @@
 ARG ROS_DISTRO=jazzy
 ARG UBUNTU_VER=24.04
 
+# There are two images: ros:${ROS_DISTRO}-ros-base and osrf/ros:${ROS_DISTRO}-desktop
+# For a full list of what packages each installs, go to https://www.ros.org/reps/rep-2001.html#jazzy-jalisco-may-2024-may-2029
 FROM ros:${ROS_DISTRO}-ros-base
 
 #################### ENV SETUP ####################
@@ -28,7 +30,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     udev \
     libusb-1.0-0 \
     libserial-dev \
-    \
     # Build + Python
     build-essential \
     python3-pip \
@@ -40,7 +41,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     bash-completion \
     pipx \
     python-is-python3 \
-    \
+    libserial-dev \
     # GUI libs (some of these might be unnecessary, test it later TODO)
     libegl1-mesa-dev \
     libglu1-mesa-dev \
@@ -55,14 +56,29 @@ RUN pipx install platformio && pipx ensurepath
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
     apt-get update && apt-get install -y --no-install-recommends \
+    # Robot control
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
     ros-${ROS_DISTRO}-ros2-control-cmake \
-    ros-${ROS_DISTRO}-xacro \
-    ros-${ROS_DISTRO}-joint-state-publisher-gui \
     ros-${ROS_DISTRO}-robot-state-publisher \
+    ros-${ROS_DISTRO}-xacro \
+    # Inputs
+    ros-${ROS_DISTRO}-joy \
+    ros-${ROS_DISTRO}-joy-linux \
+    ros-${ROS_DISTRO}-teleop-twist-joy \
+    # Networking
     ros-${ROS_DISTRO}-rmw-zenoh-cpp \
-    ros-${ROS_DISTRO}-foxglove-bridge
+    ros-${ROS_DISTRO}-foxglove-bridge \
+    # GUIs + visualization
+    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-joint-state-publisher-gui \
+    # Sensors
+    ros-${ROS_DISTRO}-realsense2-camera \
+    ros-${ROS_DISTRO}-realsense2-description \
+    ros-${ROS_DISTRO}-image-transport \
+    ros-${ROS_DISTRO}-image-transport-plugins \
+    ros-${ROS_DISTRO}-vision-msgs
+    # Simulation
 
 #################### CTRE PHOENIX ####################
 RUN curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg" && \
