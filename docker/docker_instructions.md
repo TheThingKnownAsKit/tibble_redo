@@ -57,6 +57,8 @@ The repository is now fully downloaded into WSL. You can now work directly in th
 DO THIS TO RUN DOCKER IN WSL WITHOUT DOCKER DESKTOP: https://medium.com/geekculture/run-docker-in-windows-10-11-wsl-without-docker-desktop-a2a7eb90556d
 DO THIS TO RUN DOCKER IN WSL WITH DOCKER DESKTOP: https://docs.docker.com/desktop/features/wsl/ 
 
+**ONLY EVER RUN DOCKER COMPOSE UP FROM INSIDE WSL OR IT WON'T WORK.**
+
 ## USB Passthrough
 
 Follow these instructions to set up usb pass through to WSL (https://learn.microsoft.com/en-us/windows/wsl/connect-usb). Otherwise, nothing connected to your computer by USB will be accessible by WSL.
