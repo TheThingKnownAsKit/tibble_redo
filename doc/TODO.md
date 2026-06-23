@@ -20,6 +20,7 @@
     - should utilize the new improvements made in points 8 and 9
 12. add better baremetal support
     - rosdep info and dependency install script maybe
+13. the zenoh router for comp HAS to go on onboard bare metal
 
 
 STRETCH GOALS (not in order of importance)
