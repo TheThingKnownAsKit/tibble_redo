@@ -1,12 +1,40 @@
-# IF YOU ARE ON A WINDOWS DEVICE AND WANT TO RUN THIS IN A DOCKER CONTAINER, THESE ARE YOUR INSTRUCTIONS
+| Table of Contents |
+| ------- |
+- [Requirements](#requirements)
+- [Recommended VSCode Extensions](#recommended-vscode-extensions)
+- [Windows](#windows)
+  - [WSL Install and Setup](#wsl-install-and-setup)
+  - [USB Passthrough](#usb-passthrough)
+  - [Docker Install and Setup](#docker-install-and-setup)
+- [MacOS](#macos)
+- [Linux](#linux)
+- [IF YOU HAVE AN NVIDIA GPU YOU HAVE TO DO THIS](#if-you-have-an-nvidia-gpu-you-have-to-do-this)
+- [Launch and Runtime](#launch-and-runtime)
 
-First of all, because this project requires access to USB input, GPU, and GUI, it is really annoying to get that to work on windows. You have essentially two options:
-1. build the container in Windows and configure it to work with a WSL layer underneath
-2. build the container in WSL and it'll still work with a WSL layer underneath
+# Requirements
 
-It is HIGHLY recommended that you pick option 2. Option 1 really has no benefit. You still have to set up WSL, configure docker to work with it, and it'll all still run in WSL under the hood. All linux docker containers run in WSL under the hood anyways. Picking option 2 means less configuration, the ability to work on bare metal in Linux still, and higher performance. It does mean you will have to work more with Linux, which may be an uncomfortable or new experience, so this guide will walk you through the process.
+In order for this repository to be able to run, any Docker or containerized setup needs the following:
 
-## Installing up WSL
+1. USB passthrough (gamepads, cameras, sensors, etc)
+2. GPU/hardware acceleration access
+3. Display/GUI access
+4. Full network access
+5. Access to serial microcontroller writing
+
+If you decide to come up with your own containerized solution, keep these requirements in mind. Note, some operating systems require extra work to get these requirements, and some operating systems can accomplish all of them just via the compose file. If the instructions in this document do not cover a requirement, assume it is automatically covered by compose.
+
+# Recommended VSCode Extensions
+
+- [Remote Development by Microsoft](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
+- [Container Tools by Microsoft](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-containers)
+
+Remote Development is a bundle of extensions that will allow you to interact with Docker and WSL in VSCode. Container Tools lets you more easily manage containers (starting, stopping, etc) and has better functionality with Docker Compose.
+
+# Windows
+
+Basically, the only way to get this to work is by using WSL. ROS2 is *technically* supported on Windows, but this project sure isn't. If you want to run it, either install all the libraries manually on bare metal WSL or utilize this docker setup to do so. It is recommended you use Docker (which will run on WSL).
+
+## WSL Install and Setup
 
 What is WSL? It stands for Windows Subsystem for Linux. It basically allows you to install an entire Linux operating system on your computer that you can access as a subsystem. Your primary operating system will still be Windows, you can just access Linux through a command line and develop in it as if it were a real Linux machine. This has it's limitations, but it should work enough for ROS2 development kinda sorta.
 
@@ -23,15 +51,10 @@ You can follow the [official Windows WSL install instructions](https://learn.mic
 6. Type in the command `wsl --install --Ubuntu-24.04`
 7. Type in your Unix username (doesn't really matter)
 8. Type in your Unix password (remember this you will be typing it a lot, or write it down)
+9. Close that PowerShell window and do not continue working in it or it'll break things
+10. Type WSL in the windows start menu and open the app that looks like a penguin (this will be how you open WSL any time you want to)
 
-**After initially installing a Linux distribution, close that PowerShell window and do not continuing working in it.** For some reason, PowerShell  will automatically send you into the system directory on the Linux distribution and not the user's home directory. That's like automatically sending someone to the System32 directory on Windows instead of Documents or something. It is extremely not advised to do any work there.
-
-**INSTEAD, to open WSL from now one, press the Windows button on your keyboard or in the taskbar and type WSL.** Click on that executable (do not run it as an administrator) and it will take you to your user home directory instead. I recommend pinning this app to your taskbar or start page or whatever you prefer.
-
-## WSL Setup
-
-Now, we are going to configure WSL for you to be able to work in it regularly. This will also let you work bare metal and not necessarily need the docker container, if you'd prefer.
-
+Now that WSL is installed, you have to add an SSH key in order to be able to use GitHub.
 1. Open WSL using the app NOT PowerShell (see above)
 2. Set up a GitHub SSH key so you can pull/push in WSL
     - Type the command `ssh-keygen -t ed25519 -C "your_email@example.com"`
@@ -52,36 +75,41 @@ Now, we are going to configure WSL for you to be able to work in it regularly. T
     - Copy that
     - In the WSL terminal, type `git clone <whatyoucopied>`
 
-The repository is now fully downloaded into WSL. You can now work directly in this installation. I recommend setting up VSCode to work with this.
-
-DO THIS TO RUN DOCKER IN WSL WITHOUT DOCKER DESKTOP: https://medium.com/geekculture/run-docker-in-windows-10-11-wsl-without-docker-desktop-a2a7eb90556d
-DO THIS TO RUN DOCKER IN WSL WITH DOCKER DESKTOP: https://docs.docker.com/desktop/features/wsl/ 
-
-**ONLY EVER RUN DOCKER COMPOSE UP FROM INSIDE WSL OR IT WON'T WORK.**
-
 ## USB Passthrough
 
-Follow these instructions to set up usb pass through to WSL (https://learn.microsoft.com/en-us/windows/wsl/connect-usb). Otherwise, nothing connected to your computer by USB will be accessible by WSL.
+**WSL does not have access to any USB devices on your computer by default.** You have to manually link them. Follow these instructions to set up [USB Passthrough on WSL](https://learn.microsoft.com/en-us/windows/wsl/connect-usb). Otherwise, nothing connected to your computer by USB will be accessible by WSL.
+
+You will have to manually add any USB you want through this process. This does not support hot plugging. **If you want your USB device to automatically attach to WSL any time it is plugged in,** use the command `usbipd attach --wsl --auto-attach --busid <BUSID>` instead of what the tutorial says to. Note: this is USB port sensitive and will not work unless the USB device is plugged into the same port every time.
 
 **Note: the USB stack from Windows to WSL is terrible and barely works, especially for gamepads.** Because it is a Windows product, the USB passthrough is filled with redundancy that introduces latency. This is fine for things like serial communication, but for USBs with high input streams and required low latency (like a gamepad), this more often than not breaks it completely. It is unlikely that you will be able to get a gamepad to work with WSL unless you run the joy node on Windows and pass it through to WSL but that is more trouble than it's worth. Instead, use [teleop_twist_keyboard](https://docs.ros.org/en/ros2_packages/rolling/api/teleop_twist_keyboard/) to generate cmd_vel. Logic for keyboard based attachment control is a heavy maybe.
 
-## VSCode Setup
+You could also create a virtual machine instead of using a Docker container, but in my humble opinion that is more trouble than it's worth.
 
-1. Open VSCode, it can be an empty window
-2. Install the WSL extension
-3. Do ctrl + shift + p
-4. Type WSL: Connect to WSL
-5. You should now be in the WSL filesystem. Navigate to your project repository and open it
-6. Install the Remote Development and Container Tools extensions
-7. Right click on the compose.yaml and select Compose Up
+## Docker Install and Setup
 
-# Linux instructions
+You can follow the official guide to [Install Docker Desktop on Windows](https://docs.docker.com/desktop/setup/install/windows-install/#install-docker-desktop-on-windows). Docker Desktop is the dashboard app that lets you manage your Docker containers, while Docker Engine is the actual software that will create your containers. Installing Docker Desktop will install engine. For Windows, installing it is NOT optional.
 
-To install docker engine (not desktop, desktop is not available on Linux), follow this guide: https://docs.docker.com/engine/install/ for your distribution
+After installation, open Docker Desktop
+1. Navigate to Settings -> General -> Use the WSL 2 based engine should be checked
+2. Navigate to Settings -> Resoures -> WSL Integration -> Enable integration with my default WSL distro should be checked to yes. If you have more than one distro you're using, make sure Ubuntu-24.04 one for ROS2 is enabled additionally
 
-DO NOT FORGET TO DO THE POST INSTALLATION STEPS https://docs.docker.com/engine/install/linux-postinstall/
+**Do not compose the container in Windows, ALWAYS compose it in WSL. The instructions for which are in [Launch and Runtime](#launch-and-runtime).** Run those commands in your WSL instance.
 
-#  IF YOU HAVE AN NVIDIA GPU IN YOUR COMPUTER, YOU MUST DO THE FOLLOWING
+# MacOS
+
+Currently, USB passthrough to a Docker container on MacOS is experimental and not really working. If you want to develop for this project with no USB passthrough, follow the [official Docker Desktop on Mac](https://docs.docker.com/desktop/setup/install/mac-install/) instructions. This method has not been tested and may or may not actually work at all.
+
+Instead of using Docker, it is recommended to use a virtual machine. Scripts and instructions for this have already been created at the team at https://unl-lunabotics.github.io/docs/Technical/Setup%20Dev%20Tools/macOS/.
+
+# Linux
+
+To install docker engine (not desktop, desktop is not available on Linux), follow this guide: https://docs.docker.com/engine/install/ for your distribution.
+
+**DO NOT FORGET TO DO THE [POST INSTALLATION](https://docs.docker.com/engine/install/linux-postinstall) STEPS.**
+
+**Any time you restart your computer**, you will HAVE to do `xhost +local:` to give the container access to X11 displays or any GUI ran from the container will crash. There are ways to automate this, but I have not implemented any of them personally.
+
+# IF YOU HAVE AN NVIDIA GPU YOU HAVE TO DO THIS
 
 Nvidia GPUs are special little monsters that require special permissions in the docker compose. The normal compose will not work for you, and we can't add fixes into the normal compose because it'll break it for everyone not using Nvidia.
 
@@ -97,4 +125,22 @@ services:
     gpus: all
 ```
 
-**For some really weird reason, if you are using the Container Tools extension by Microsoft and right clicking on compose files to generate containers, it will NOT detect this override.** You would have to do `cd docker/ && docker compose up` instead for the override to register.
+# Launch and Runtime
+
+This project uses Docker Compose. If you want to read more, you can at the [Official Docker Compose](https://docs.docker.com/compose/) documentation, but basically, it's just how we specify the configuration of the container. The actual Dockerfile specifies how to build the container and the compose is the settings.
+
+This project utilizes [compose profiles](https://docs.docker.com/compose/how-tos/profiles/), which means there are different container configurations already pre-written depending on what you want to do in the container. This project has two compose files (unless you added an override then there's three): `compose-base.yaml` and `compose-yaml`. The base compose contains all configurations that are universal to every profile, and compose-yaml contains the profiles (which extend the base). 
+
+**There are three compose profiles and you HAVE to pick one one to use, there is no default.**
+1. `remote` is recommend for most use cases. It assumes you are wanting to use two computers, onboard and groundstation, to do wireless remote control of the rover WITHOUT the wifi router.
+2. `competition` is the same as remote except it assumes you are using the wifi router for networking. It is not recommended to use this unless you're testing the router because you cannot have internet access while on the router.
+3. `wired` assumes you are controlling the rover with a controller plugged into the ONBOARD computer. This setup still allows for two computers if you are SSH into onboard.
+
+**To create the container and attach a terminal shell**, run the following commands from the repository root:
+```bash
+cd docker/ && docker compose --profile <PROFILE> up
+# Wait for it to finish creating the container...
+docker exec -it tibble_<PROFILE> bash
+```
+
+**To create the container and attach VSCode**, compose the container using the first command above, install Container Tools from [Recommended VSCode Extensions](#recommended-vscode-extensions). Open the crate icon in the left toolbar, right click on your tibble container, and select Attach Visual Studio Code. This also makes it easier to remove, stop, start, or otherwise manage containers. I personally recommend just using a terminal shell.
