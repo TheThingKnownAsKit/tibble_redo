@@ -19,7 +19,7 @@ services:
       file: compose-base.yaml
       service: tibble_base
 
-    container_name: tibble
+    container_name: tibble_remote
 
     environment:
       - RMW_IMPLEMENTATION=rmw_zenoh_cpp
@@ -32,7 +32,7 @@ services:
       file: compose-base.yaml
       service: tibble_base
 
-    container_name: tibble
+    container_name: tibble_competition
 
     environment:
           - RMW_IMPLEMENTATION=rmw_zenoh_cpp
@@ -48,7 +48,7 @@ services:
       file: compose-base.yaml
       service: tibble_base
 
-    container_name: tibble
+    container_name: tibble_wired
 
     environment:
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
