@@ -123,6 +123,8 @@ namespace tibble_controller
     controller_interface::return_type TibbleController::update(const rclcpp::Time &time, const rclcpp::Duration &period)
     {
         // TODO: all of it
+        (void)time;
+        (void)period;
         return controller_interface::return_type::OK;
     }
 
