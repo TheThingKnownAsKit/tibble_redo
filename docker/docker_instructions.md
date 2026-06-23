@@ -73,7 +73,13 @@ Follow these instructions to set up usb pass through to WSL (https://learn.micro
 6. Install the Remote Development and Container Tools extensions
 7. Right click on the compose.yaml and select Compose Up
 
-##  IF YOU HAVE AN NVIDIA GPU IN YOUR COMPUTER, YOU MUST DO THE FOLLOWING
+# Linux instructions
+
+To install docker engine (not desktop, desktop is not available on Linux), follow this guide: https://docs.docker.com/engine/install/ for your distribution
+
+DO NOT FORGET TO DO THE POST INSTALLATION STEPS https://docs.docker.com/engine/install/linux-postinstall/
+
+#  IF YOU HAVE AN NVIDIA GPU IN YOUR COMPUTER, YOU MUST DO THE FOLLOWING
 
 Nvidia GPUs are special little monsters that require special permissions in the docker compose. The normal compose will not work for you, and we can't add fixes into the normal compose because it'll break it for everyone not using Nvidia.
 
