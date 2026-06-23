@@ -24,6 +24,9 @@ services:
     environment:
       - RMW_IMPLEMENTATION=rmw_zenoh_cpp
       - ZENOH_CONFIG=/config/zenoh/remote.json5
+    
+    profiles:
+      - remote
 
   # This is the competition grade docker setup
   # It assumes the iplink router is being used with Zenoh
