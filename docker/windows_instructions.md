@@ -72,3 +72,21 @@ Follow these instructions to set up usb pass through to WSL (https://learn.micro
 5. You should now be in the WSL filesystem. Navigate to your project repository and open it
 6. Install the Remote Development and Container Tools extensions
 7. Right click on the compose.yaml and select Compose Up
+
+##  IF YOU HAVE AN NVIDIA GPU IN YOUR COMPUTER, YOU MUST DO THE FOLLOWING
+
+Nvidia GPUs are special little monsters that require special permissions in the docker compose. The normal compose will not work for you, and we can't add fixes into the normal compose because it'll break it for everyone not using Nvidia.
+
+If you have Nvidia, create a file named `compose.override.yaml` (THIS NAME HAS TO MATCH THE COMPOSE FILE NAME JUST WITH .override. IN IT) in the docker/ directory. When this is present, it will merge with the existing compose automatically, and is ignored by git so it's like a .env override. In the file, paste the following:
+
+```yaml
+services:
+  tibble_remote:
+    gpus: all
+  tibble_competition:
+    gpus: all
+  tibble_wired:
+    gpus: all
+```
+
+**For some really weird reason, if you are using the Container Tools extension by Microsoft and right clicking on compose files to generate containers, it will NOT detect this override.** You would have to do `cd docker/ && docker compose up` instead for the override to register.

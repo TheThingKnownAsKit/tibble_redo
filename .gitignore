@@ -4,3 +4,4 @@ install
 log
 .venv
 .env
+compose.override.yaml
