@@ -24,7 +24,7 @@ x-tibble-base: &tibble-base
   stdin_open: true  # Keeps interactive terminal open
 
   volumes:
-    - ..:/workspaces/tibble_red                  # This repository binded as read/write
+    - ..:/workspaces/tibble_redo                # This repository binded as read/write
     # You may be asking yourself why are we mounting udev, dev, and serial if this container is privileged?
     # Great question, it's because making it privileged gives the container access to everything but the structure
     # of the directories is not preserved or shared in full, so we need to explicitly bind them to make sure
@@ -33,7 +33,7 @@ x-tibble-base: &tibble-base
     - /dev/serial/by-id:/dev/serial/by-id:ro    # Binding this provides stable device naming (/dev/ttyUSB0 won't change)
     - /dev:/dev                                 # Gives access to ALL devices (USB, input, cameras, etc)
     - /tmp/.X11-unix:/tmp/.X11-unix:rw          # Shares X server socket which is required for GUI apps on Linux
-    - ../config/zenoh:/config/zenoh              # The config directory for Zenoh
+    - ../config/zenoh:/config/zenoh             # The config directory for Zenoh
 
   cap_add:  # Add specific linux kernal capabilities to the container
     - SYS_NICE      # For real-time scheduling, allows setting thread priority
