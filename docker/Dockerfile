@@ -30,6 +30,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     udev \
     libusb-1.0-0 \
     libserial-dev \
+    usbutils \
     # Build + Python
     build-essential \
     python3-pip \
