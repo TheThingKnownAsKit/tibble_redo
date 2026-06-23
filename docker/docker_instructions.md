@@ -1,5 +1,3 @@
-| Table of Contents |
-| ------- |
 - [Requirements](#requirements)
 - [Recommended VSCode Extensions](#recommended-vscode-extensions)
 - [Windows](#windows)
