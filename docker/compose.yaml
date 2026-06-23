@@ -11,7 +11,6 @@
 name: tibble_redo
 
 services:
-
   # This is the DEFAULT PROFILE of the tibble service
   # It assumes the iplink router is not being used but remote control is wanted
   # So it sets up Zenoh but not the router
@@ -39,25 +38,9 @@ services:
           - RMW_IMPLEMENTATION=rmw_zenoh_cpp
           - ZENOH_CONFIG=/config/zenoh/competition_client.json5
     
-    # This service uses another service to set up the Zenoh router
-    depends_on:
-      - zenoh_router
-    
     # This profile is only used when composed with docker compose --profile competition up
     profiles:
       - competition
-
-  zenoh_router:
-    image: eclipse/zenoh:latest
-    command: ["zenohd", "-c", "/config/competition_router.json5"]
-
-    volumes:
-          - ./config/zenoh:/config
-    
-    network_mode: host
-
-    profiles:
-    - competition
   
   # This service assumes you are only using one machine for development or using wired control
   tibble_wired:
