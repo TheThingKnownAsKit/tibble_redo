@@ -75,13 +75,9 @@ Now that WSL is installed, you have to add an SSH key in order to be able to use
 
 ## USB Passthrough
 
-**WSL does not have access to any USB devices on your computer by default.** You have to manually link them. Follow these instructions to set up [USB Passthrough on WSL](https://learn.microsoft.com/en-us/windows/wsl/connect-usb). Otherwise, nothing connected to your computer by USB will be accessible by WSL.
+**WSL does not have access to any USB devices on your computer by default.** You have to manually link them. Follow these instructions to set up [USB Passthrough on WSL](https://unl-lunabotics.github.io/docs/Technical/Setup%20Dev%20Tools/Windows/Device-Passthrough-for-Windows.html). Otherwise, nothing connected to your computer by USB will be accessible by WSL.
 
 You will have to manually add any USB you want through this process. This does not support hot plugging. **If you want your USB device to automatically attach to WSL any time it is plugged in,** use the command `usbipd attach --wsl --auto-attach --busid <BUSID>` instead of what the tutorial says to. Note: this is USB port sensitive and will not work unless the USB device is plugged into the same port every time.
-
-**Note: the USB stack from Windows to WSL is terrible and barely works, especially for gamepads.** Because it is a Windows product, the USB passthrough is filled with redundancy that introduces latency. This is fine for things like serial communication, but for USBs with high input streams and required low latency (like a gamepad), this more often than not breaks it completely. It is unlikely that you will be able to get a gamepad to work with WSL unless you run the joy node on Windows and pass it through to WSL but that is more trouble than it's worth. Instead, use [teleop_twist_keyboard](https://docs.ros.org/en/ros2_packages/rolling/api/teleop_twist_keyboard/) to generate cmd_vel. Logic for keyboard based attachment control is a heavy maybe.
-
-You could also create a virtual machine instead of using a Docker container, but in my humble opinion that is more trouble than it's worth.
 
 ## Docker Install and Setup
 
