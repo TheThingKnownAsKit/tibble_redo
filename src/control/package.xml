@@ -8,19 +8,26 @@
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <build_depend>ros2_control_cmake</build_depend>
 
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
   <depend>controller_interface</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
-  <depend>rclcpp_lifecycle</depend>
-  <depend>rclcpp</depend>
   <depend>realtime_tools</depend>
   <depend>interfaces</depend>
+  <!-- Will probably need to add std msgs, geometry msg -->
+  <depend>control_msgs</depend>
 
   <exec_depend>controller_manager</exec_depend>
-  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>ros2_controllers</exec_depend>
+  <exec_depend>ros2_control</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>joy_linux</exec_depend>
   <exec_depend>ros2controlcli</exec_depend>
+  <exec_depend>teleop_twist_joy</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -7,6 +7,15 @@
   <maintainer email="moodyellam@gmail.com">ellam</maintainer>
   <license>Apache-2.0</license>
 
+  <exec_depend>description</exec_depend>
+  <exec_depend>control</exec_depend>
+  <exec_depend>interfaces</exec_depend>
+
+  <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>rmw_zenoh_cpp</exec_depend>
   <exec_depend>rviz2</exec_depend>
 
   <export>
