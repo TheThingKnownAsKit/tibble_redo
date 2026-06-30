@@ -28,12 +28,12 @@ services:
 
   # This service assumes you are using two machines requiring strict networking
   # Enables Zenoh and runs a router on the host machine
-  tibble_remote:
+  tibble_wireless:
     extends:
       file: compose-base.yaml
       service: tibble_base
 
-    container_name: tibble_remote
+    container_name: tibble_wireless
 
     environment:
       - RMW_IMPLEMENTATION=rmw_zenoh_cpp
