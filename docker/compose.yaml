@@ -11,40 +11,7 @@
 name: tibble_redo
 
 services:
-  # This is the DEFAULT PROFILE of the tibble service
-  # It assumes the iplink router is not being used but remote control is wanted
-  # So it sets up Zenoh but not the router
-  tibble_remote:
-    extends:
-      file: compose-base.yaml
-      service: tibble_base
 
-    container_name: tibble_remote
-
-    environment:
-      - RMW_IMPLEMENTATION=rmw_zenoh_cpp
-      - ZENOH_CONFIG=/config/zenoh/remote.json5
-    
-    profiles:
-      - remote
-
-  # This is the competition grade docker setup
-  # It assumes the iplink router is being used with Zenoh
-  tibble_competition:
-    extends:
-      file: compose-base.yaml
-      service: tibble_base
-
-    container_name: tibble_competition
-
-    environment:
-          - RMW_IMPLEMENTATION=rmw_zenoh_cpp
-          - ZENOH_CONFIG=/config/zenoh/competition_client.json5
-    
-    # This profile is only used when composed with docker compose --profile competition up
-    profiles:
-      - competition
-  
   # This service assumes you are only using one machine for development or using wired control
   tibble_wired:
     extends:
@@ -58,3 +25,35 @@ services:
 
     profiles:
       - wired
+
+  # This service assumes you are using two machines requiring strict networking
+  # Enables Zenoh and runs a router on the host machine
+  tibble_remote:
+    extends:
+      file: compose-base.yaml
+      service: tibble_base
+
+    container_name: tibble_remote
+
+    environment:
+      - RMW_IMPLEMENTATION=rmw_zenoh_cpp
+      - ZENOH_CONFIG=/docker/zenoh_client.json5
+    
+    depends_on:
+      - zenoh_router
+    
+    profiles:
+      - wireless
+
+  zenoh_router:
+    image: eclipse/zenoh
+    container_name: zenoh_router
+    network_mode: host
+    restart: unless-stopped
+
+    command:
+      - --listen
+      - tcp/0.0.0.0:${ZENOH_ROUTER_PORT:-7447}
+
+    profiles:
+      - wireless

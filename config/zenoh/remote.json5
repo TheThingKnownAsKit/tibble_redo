@@ -1,9 +1,0 @@
-{
-  mode: "peer",
-
-  scouting: {
-    multicast: {
-      enabled: true
-    }
-  }
-}

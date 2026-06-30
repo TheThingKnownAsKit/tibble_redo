@@ -32,7 +32,6 @@ services:
       - /dev/serial/by-id:/dev/serial/by-id:ro    # Binding this provides stable device naming (/dev/ttyUSB0 won't change)
       - /dev:/dev                                 # Gives access to ALL devices (USB, input, cameras, etc)
       - /tmp/.X11-unix:/tmp/.X11-unix:rw          # Shares X server socket which is required for GUI apps on Linux
-      - ../config/zenoh:/config/zenoh             # The config directory for Zenoh
 
     cap_add:  # Add specific linux kernal capabilities to the container
       - SYS_NICE      # For real-time scheduling, allows setting thread priority
