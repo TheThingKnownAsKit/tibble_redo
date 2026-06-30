@@ -111,11 +111,7 @@ If you have Nvidia, create a file named `compose.override.yaml` (THIS NAME HAS T
 
 ```yaml
 services:
-  tibble_remote:
-    gpus: all
-  tibble_competition:
-    gpus: all
-  tibble_wired:
+  tibble_base:
     gpus: all
 ```
 
@@ -126,9 +122,8 @@ This project uses Docker Compose. If you want to read more, you can at the [Offi
 This project utilizes [compose profiles](https://docs.docker.com/compose/how-tos/profiles/), which means there are different container configurations already pre-written depending on what you want to do in the container. This project has two compose files (unless you added an override then there's three): `compose-base.yaml` and `compose-yaml`. The base compose contains all configurations that are universal to every profile, and compose-yaml contains the profiles (which extend the base). 
 
 **There are three compose profiles and you HAVE to pick one one to use, there is no default.**
-1. `remote` is recommend for most use cases. It assumes you are wanting to use two computers, onboard and groundstation, to do wireless remote control of the rover WITHOUT the wifi router.
-2. `competition` is the same as remote except it assumes you are using the wifi router for networking. It is not recommended to use this unless you're testing the router because you cannot have internet access while on the router.
-3. `wired` assumes you are controlling the rover with a controller plugged into the ONBOARD computer. This setup still allows for two computers if you are SSH into onboard.
+1. `wireless` assumes you are using two computers, onboard and groundstation, to do wireless remote control of the rover. It might have some configurable IPs you have to do but should work across a variety of network channels
+2. `wired` assumes you are controlling the rover with a controller plugged into the ONBOARD computer. This setup still allows for two computers if you are SSH into onboard.
 
 **To create the container and attach a terminal shell**, run the following commands from the repository root:
 ```bash
