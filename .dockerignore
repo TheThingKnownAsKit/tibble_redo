@@ -1,0 +1,3 @@
+# Ignore everything except package files
+src/**
+!src/**/package.xml

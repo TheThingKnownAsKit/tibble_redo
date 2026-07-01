@@ -53,33 +53,21 @@ RUN --mount=type=cache,target=/var/cache/apt \
 RUN pipx install platformio && pipx ensurepath
 
 #################### ROS PACKAGES ####################
-# Cache the downloads to speed up rebuilds
+# The .dockerignore will only allow package.xml files to be copied over
+# This is important because otherwise the layer would need to be rebuilt every time the source code changes
+COPY --chown=ubuntu:ubuntu src/ /workspaces/tibble_redo/src/
+
+# Use rosdep to install dependencies instead of manually listing every single one
+# This does mean that the package.xml of every ros2 package needs to be maintained and updated
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
-    # Robot control
-    ros-${ROS_DISTRO}-ros2-control \
-    ros-${ROS_DISTRO}-ros2-controllers \
-    ros-${ROS_DISTRO}-ros2-control-cmake \
-    ros-${ROS_DISTRO}-robot-state-publisher \
-    ros-${ROS_DISTRO}-xacro \
-    # Inputs
-    ros-${ROS_DISTRO}-joy \
-    ros-${ROS_DISTRO}-joy-linux \
-    ros-${ROS_DISTRO}-teleop-twist-joy \
-    # Networking
-    ros-${ROS_DISTRO}-rmw-zenoh-cpp \
-    ros-${ROS_DISTRO}-foxglove-bridge \
-    # GUIs + visualization
-    ros-${ROS_DISTRO}-rviz2 \
-    ros-${ROS_DISTRO}-joint-state-publisher-gui \
-    # Sensors
-    ros-${ROS_DISTRO}-realsense2-camera \
-    ros-${ROS_DISTRO}-realsense2-description \
-    ros-${ROS_DISTRO}-image-transport \
-    ros-${ROS_DISTRO}-image-transport-plugins \
-    ros-${ROS_DISTRO}-vision-msgs
-    # Simulation
+    apt-get update && \
+    rosdep update && \
+    rosdep install \
+      --from-paths /workspaces/tibble_redo/src \
+      --ignore-src \
+      --rosdistro ${ROS_DISTRO} \
+      -y
 
 #################### CTRE PHOENIX ####################
 RUN curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg" && \
@@ -121,10 +109,6 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" \
 #################### USER ENV ####################
 USER $USERNAME
 WORKDIR /workspaces/tibble_redo/
-
-RUN mkdir -p ~/.colcon && \
-    printf "build:\n  symlink-install: true\n  cmake-args: [\"-DPython3_EXECUTABLE=/usr/bin/python3\"]\n" \
-    > ~/.colcon/defaults.yaml
 
 RUN printf "\nsource /opt/ros/${ROS_DISTRO}/setup.bash\n" >> ~/.bashrc && \
     printf "if [ -f /workspaces/2026-Tibble-Bot/install/setup.bash ]; then source /workspaces/2026-Tibble-Bot/install/setup.bash; fi\n" >> ~/.bashrc && \
